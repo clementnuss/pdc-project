@@ -47,16 +47,29 @@ def main():
 
         # Display the resulting frame
 
-        cv2.imshow('original', frame)
 
         hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         cv2.imshow('hsv', hsv_img)
 
         min_hsv = np.array(get_min_hsv(), np.uint8)
         max_hsv = np.array(get_max_hsv(), np.uint8)
-        frame_threshed = cv2.inRange(hsv_img, min_hsv, max_hsv)
+        frame_thresholded = cv2.inRange(hsv_img, min_hsv, max_hsv)
 
-        cv2.imshow('hsv_thresholded', frame_threshed)
+        # We erode and dilate the image to remove noise from the HSV filtering More info here:
+        # http://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_morphological_ops/py_morphological_ops.html
+        kernel = np.ones((5, 5), np.uint8)
+        frame_thresholded = cv2.morphologyEx(frame_thresholded, cv2.MORPH_OPEN, kernel)
+        cv2.imshow('hsv_thresholded', frame_thresholded)
+
+        edges = cv2.Canny(frame_thresholded, 50, 150, apertureSize=3)
+        lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 100, minLineLength=100, maxLineGap=10)
+        if lines is not None:
+            for line in lines:
+                x1, y1, x2, y2 = line[0]
+                cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+        cv2.imshow('original', frame)
+
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
