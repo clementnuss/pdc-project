@@ -1,6 +1,28 @@
 # PDC project
 Digital communication across computer screens
 
+## Roadmap:
+
+- implement screen detection (through HSV filtering and then masking the captured frames with the mask of the distant screen)
+- implement transmitter/receiver synchronization
+- send symbols using various colours (and HSV detection)
+- implement error correction code
+
+### Synchronization
+
+Before beginning the transmission, the encoder screen can alternate quickly (f=2Hz) between 2 colours for x seconds
+
+### Color detection:
+
+1. filter each frame with the HSV range of a symbol
+2. compute score for the filtered frame (that is, evaluate the portion of the image that is white)
+3. choose symbol with highest area.
+
+*Improvements*: select symbol if an area is greater than a threshold, instead of computing all areas and all filtered ranges.
+
+*Calibration*: we need to count how many symbols can be reliably encoded/decoded. That is count how many colours we can use.
+
+With 4 colours there shall not be any problem at all. 8 would be nice !
 
 #### OpenCV Python tutorials
 
