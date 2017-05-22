@@ -1,3 +1,5 @@
+from time import sleep
+
 import cv2
 import numpy as np
 
@@ -71,7 +73,7 @@ def main():
         cv2.imshow('original', frame)
 
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(0) & 0xFF == ord('q'):
             break
 
 
