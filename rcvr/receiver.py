@@ -35,6 +35,7 @@ class Receiver(object):
         pass
 
     def doSync(self):
+        # HSV values for filtering H: 64-130 S: 126-255 V: 111-255
         pass
 
     def doReceive(self):

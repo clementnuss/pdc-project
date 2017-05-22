@@ -36,6 +36,9 @@ def getCameraSnapshot():
     return cap.read()
 
 
+def getMask(h, s, v):
+    pass
+
 def displayFrame(frame):
     cv2.imshow("OpenCV", frame)
     cv2.waitKey(1)
