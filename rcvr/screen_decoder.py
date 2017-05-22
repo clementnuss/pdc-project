@@ -32,6 +32,14 @@ def initialize_gui():
     cv2.resizeWindow(TRACKBAR_WINDOW, 400, 300)
 
 
+def getCameraSnapshot():
+    return cap.read()
+
+
+def displayFrame(frame):
+    cv2.imshow("OpenCV", frame)
+    cv2.waitKey(1)
+
 def get_min_hsv():
     return [get_trackbar_value('H_min'), get_trackbar_value('S_min'), get_trackbar_value('V_min')]
 
@@ -75,9 +83,10 @@ def main():
             break
 
 
-initialize_gui()
-main()
+if __name__ == '__main__':
+    initialize_gui()
+    main()
 
-# When everything done, release the capture
-cap.release()
-cv2.destroyAllWindows()
+    # When everything done, release the capture
+    cap.release()
+    cv2.destroyAllWindows()
