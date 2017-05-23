@@ -54,8 +54,6 @@ def main():
         ret, frame = cap.read()
 
         # Display the resulting frame
-
-
         hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         cv2.imshow('hsv', hsv_img)
 
@@ -78,8 +76,7 @@ def main():
 
         cv2.imshow('original', frame)
 
-
-        if cv2.waitKey(0) & 0xFF == ord('q'):
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
 

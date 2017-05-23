@@ -1,3 +1,4 @@
+import time
 from enum import Enum
 
 import cv.CV_GUI_Handler
@@ -14,6 +15,9 @@ class State(Enum):
 
 
 class Receiver(object):
+    CONVERGENCE_THRESHOLD = 10000
+    BLACK_THRESHOLD = 2000000
+
     def __init__(self):
         self.cv = cv.CV_GUI_Handler.OpenCvHandler()
         self.cap = cv.CV_Video_Capture_Handler.CV_Video_Capture_Handler()
@@ -22,6 +26,7 @@ class Receiver(object):
         self.screen_mask = None
 
         print('Initialized rcvr at state ' + str(self.state))
+        time.sleep(1)
 
     def run(self):
         if self.state == State.IDLE:
@@ -58,10 +63,30 @@ class Receiver(object):
         pass
 
     def _compute_screen_mask(self):
-        ret, frame = self.cap.readFrame()
-        self.screen_mask = getMask(frame)
+        converged = False
+        ret, frame = self.cap.readHSVFrame()
+        prev_mask = getMask(frame)
 
-        self.cv.send_new_frame(self.screen_mask)
+        while not converged:
+            ret, frame = self.cap.readHSVFrame()
+            mask = getMask(frame)
+
+            s = np.sum(mask)
+            diff = np.sum(mask - prev_mask)
+            print("Mask sum: ", s)
+            print("Mask diff: ", diff)
+
+            if diff < Receiver.CONVERGENCE_THRESHOLD and s > Receiver.BLACK_THRESHOLD:
+                converged = True
+            else:
+                prev_mask = mask
+
+            self.cv.send_new_frame(mask)
+            time.sleep(1)
+
+        print("Synchronization OK")
+
+
 
 
 def main():

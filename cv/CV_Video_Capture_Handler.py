@@ -19,5 +19,7 @@ class CV_Video_Capture_Handler:
     def __getattr__(self, name):
         return getattr(self.instance, name)
 
-    def readFrame(self):
-        return self.videocapture.read()
+    def readHSVFrame(self):
+        ret, frame = self.videocapture.read()
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        return ret, frame

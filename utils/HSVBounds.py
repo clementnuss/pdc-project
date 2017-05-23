@@ -17,4 +17,6 @@ class HSVBounds:
     def max_bounds(self):
         return self.values[:, 1]
 
-SYNC_RANGE = HSVBounds(np.uint8(64), np.uint8(130), np.uint8(126), np.uint8(255), np.uint8(111), np.uint8(255))
+
+SYNC_RANGE_CLEMENT = HSVBounds(np.uint8(64), np.uint8(130), np.uint8(126), np.uint8(255), np.uint8(111), np.uint8(255))
+SYNC_RANGE = HSVBounds(np.uint8(57), np.uint8(85), np.uint8(133), np.uint8(255), np.uint8(111), np.uint8(255))
