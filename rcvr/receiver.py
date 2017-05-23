@@ -22,7 +22,7 @@ class Receiver(object):
     DUMMY_MASK = np.dstack([DUMMY_MASK] * 3)
 
     def __init__(self):
-        self.cv = cv.CV_GUI_Handler.OpenCvHandler()
+        self.cv_handler = cv.CV_GUI_Handler.OpenCvHandler()
         self.cap = cv.CV_Video_Capture_Handler.CV_Video_Capture_Handler()
         self.state = State.IDLE
         self.bitCount = 0
@@ -60,7 +60,7 @@ class Receiver(object):
         while True:
             ret, frame = self.cap.readHSVFrame()
             masked_frame = frame * self.DUMMY_MASK
-            self.cv.send_new_frame(masked_frame)
+            self.cv_handler.send_new_frame(masked_frame)
 
     def doCheck(self):
         pass
@@ -87,7 +87,7 @@ class Receiver(object):
             else:
                 prev_mask = mask
 
-            self.cv.send_new_frame(mask)
+            self.cv_handler.send_new_frame(mask)
             time.sleep(1)
 
         print("Synchronization OK")
