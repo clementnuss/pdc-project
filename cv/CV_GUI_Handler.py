@@ -1,4 +1,5 @@
 import threading
+import time
 
 import cv2
 import numpy as np
@@ -56,22 +57,24 @@ class OpenCvHandler:
 
     def display_bgr_color(self, bgr_col):
         """Displays the given color on the whole screen"""
-        color_frame = np.full((WIDTH, HEIGHT, 3), bgr_col, dtype=np.uint8)
+        color_frame = np.full((HEIGHT, WIDTH, 3), bgr_col, dtype=np.uint8)
         self.send_new_frame(color_frame)
 
     def display_hsv_color(self, hsv_col):
         """Converts the given color from HSV to BGR, and displays it"""
         converted_color = cv2.cvtColor(hsv_col, cv2.COLOR_HSV2BGR)
-        color_frame = np.full((WIDTH, HEIGHT, 3), converted_color, dtype=np.uint8)
+        color_frame = np.full((HEIGHT, WIDTH, 3), converted_color, dtype=np.uint8)
         self.send_new_frame(color_frame)
 
 
-"""
-# Code showing usage of the OpenCvHandler class
-sampleHandler = OpenCvHandler()
-sleep(1)
-sampleHandler.display_bgr_color((255,0,255))
-sleep(1)
-sampleHandler.display_bgr_color((255,255,255))
-sampleHandler.join_waiting_thread_handler()
-"""
+if __name__ == '__main__':
+    test = np.zeros((1, 1, 3))
+    print(test)
+    sampleHandler = OpenCvHandler()
+    time.sleep(1)
+    sampleHandler.display_bgr_color((255, 0, 255))
+    time.sleep(1)
+    sampleHandler.display_hsv_color(np.array([[[np.uint8(90), np.uint8(255), np.uint8(255)]]]))
+    time.sleep(1)
+    sampleHandler.display_hsv_color(np.array([[[np.uint8(180), np.uint8(255), np.uint8(255)]]]))
+    sampleHandler.join_waiting_thread_handler()
