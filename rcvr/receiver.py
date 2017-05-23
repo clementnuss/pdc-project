@@ -1,6 +1,8 @@
 from enum import Enum
 
-import rcvr.screen_decoder
+import cv.CV_GUI_Handler
+import cv.CV_Video_Capture_Handler
+from cv.ImageProcessing import *
 
 
 class State(Enum):
@@ -13,7 +15,11 @@ class State(Enum):
 
 class Receiver(object):
     def __init__(self):
+        self.cv = cv.CV_GUI_Handler.OpenCvHandler()
+        self.cap = cv.CV_Video_Capture_Handler.CV_Video_Capture_Handler()
         self.state = State.IDLE
+        self.bitCount = 0
+        self.screen_mask = None
 
         print('Initialized rcvr at state ' + str(self.state))
 
@@ -35,7 +41,11 @@ class Receiver(object):
         pass
 
     def doSync(self):
-        # HSV values for filtering H: 64-130 S: 126-255 V: 111-255
+        """
+        Compute the location of sender's screen. 
+        :return: 
+        """
+
         pass
 
     def doReceive(self):
@@ -47,14 +57,19 @@ class Receiver(object):
     def doWait(self):
         pass
 
+    def _compute_screen_mask(self):
+        ret, frame = self.cap.readFrame()
+        self.screen_mask = getMask(frame)
+
+        self.cv.send_new_frame(self.screen_mask)
+
 
 def main():
     r = Receiver()
     print("hi")
-    ret, frame = rcvr.screen_decoder.getCameraSnapshot()
-
-    rcvr.screen_decoder.displayFrame(frame)
-
+    # ret, frame = rcvr.screen_decoder.getCameraSnapshot()
+    # rcvr.screen_decoder.displayFrame(frame)
+    r._compute_screen_mask()
 
 if __name__ == "__main__":
     main()

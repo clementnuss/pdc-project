@@ -1,5 +1,3 @@
-from time import sleep
-
 import cv2
 import numpy as np
 
@@ -37,9 +35,6 @@ def initialize_gui():
 def getCameraSnapshot():
     return cap.read()
 
-
-def getMask(h, s, v):
-    pass
 
 def displayFrame(frame):
     cv2.imshow("OpenCV", frame)

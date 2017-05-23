@@ -1,5 +1,4 @@
 import threading
-from time import sleep, time
 
 import cv2
 import numpy as np
@@ -35,6 +34,7 @@ class OpenCvHandler:
     def __init__(self):
         if not OpenCvHandler.instance:
             OpenCvHandler.instance = OpenCvHandler.__CV_Handler
+            self.videocapture = cv2.VideoCapture(0)
             self.instance.new_frame = np.full((WIDTH, HEIGHT, 3), (255, 255, 255), dtype=np.uint8)
             self.instance.refresh = True
             self.instance.waiting_thread = threading.Thread(target=self.wait_key_func)
@@ -47,7 +47,7 @@ class OpenCvHandler:
     def __getattr__(self, name):
         return getattr(self.instance, name)
 
-    def __send_new_frame(self, new_frame):
+    def send_new_frame(self, new_frame):
         if self.instance.refresh:
             print('A frame was dropped!')
         else:
@@ -57,13 +57,13 @@ class OpenCvHandler:
     def display_bgr_color(self, bgr_col):
         """Displays the given color on the whole screen"""
         color_frame = np.full((WIDTH, HEIGHT, 3), bgr_col, dtype=np.uint8)
-        self.__send_new_frame(color_frame)
+        self.send_new_frame(color_frame)
 
     def display_hsv_color(self, hsv_col):
         """Converts the given color from HSV to BGR, and displays it"""
         converted_color = cv2.cvtColor(hsv_col, cv2.COLOR_HSV2BGR)
         color_frame = np.full((WIDTH, HEIGHT, 3), converted_color, dtype=np.uint8)
-        self.__send_new_frame(color_frame)
+        self.send_new_frame(color_frame)
 
 
 """
