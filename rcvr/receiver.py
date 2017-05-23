@@ -17,6 +17,9 @@ class State(Enum):
 class Receiver(object):
     CONVERGENCE_THRESHOLD = 10000
     BLACK_THRESHOLD = 2000000
+    DUMMY_MASK = np.zeros((480, 640), dtype=np.uint8)
+    DUMMY_MASK[200:300, 200:400] = np.uint8(1)
+    DUMMY_MASK = np.dstack([DUMMY_MASK] * 3)
 
     def __init__(self):
         self.cv = cv.CV_GUI_Handler.OpenCvHandler()
@@ -54,7 +57,10 @@ class Receiver(object):
         pass
 
     def doReceive(self):
-        pass
+        while True:
+            ret, frame = self.cap.readHSVFrame()
+            masked_frame = frame * self.DUMMY_MASK
+            self.cv.send_new_frame(masked_frame)
 
     def doCheck(self):
         pass
@@ -94,9 +100,9 @@ def main():
     print("hi")
     # ret, frame = rcvr.screen_decoder.getCameraSnapshot()
     # rcvr.screen_decoder.displayFrame(frame)
-    r._compute_screen_mask()
+    r.doReceive()
 
 if __name__ == "__main__":
     main()
-    input("Press enter to exit")
-
+    print(test)
+    input("")
