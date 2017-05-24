@@ -17,6 +17,12 @@ class State(Enum):
     VALIDATE_DATA = 'Validate data'
 
 
+def compute_score(masked_frame, color_mask) -> int:
+    diff = masked_frame - color_mask
+    diff = diff * diff
+    return np.sum(diff)
+
+
 class Receiver(object):
     # At distance ~3.20m, np.sum of the thresholded image gives ~510000 (because values are 255)
     # The threshold then needs to be around 500000
@@ -25,6 +31,9 @@ class Receiver(object):
     DUMMY_MASK = np.zeros((480, 640), dtype=np.uint8)
     DUMMY_MASK[200:300, 200:400] = np.uint8(1)
     DUMMY_MASK = np.dstack([DUMMY_MASK] * 3)
+
+    SYMBOL_ZERO_MASK = np.full((480, 640, 3), fill_value=S_ZERO, dtype=np.uint8)
+    SYMBOL_ONE_MASK = np.full((480, 640, 3), fill_value=S_ONE, dtype=np.uint8)
 
     def __init__(self):
         self.cv_handler = cv.CV_GUI_Handler.OpenCvHandler()
@@ -66,8 +75,14 @@ class Receiver(object):
     def do_receive(self):
         while True:
             ret, frame = self.cap.readHSVFrame()
-            masked_frame = frame * self.DUMMY_MASK
+            masked_frame = frame * self.screen_mask
             self.cv_handler.send_new_frame(masked_frame)
+            zero_score = compute_score(masked_frame, self.SYMBOL_ZERO_MASK)
+            one_score = compute_score(masked_frame, self.SYMBOL_ONE_MASK)
+            if (zero_score > one_score):
+                print("0")
+            else:
+                print("1")
 
     def do_check(self):
         pass
@@ -103,6 +118,7 @@ class Receiver(object):
 
             if diff < Receiver.CONVERGENCE_THRESHOLD and s > Receiver.BLACK_THRESHOLD:
                 converged = True
+                self.screen_mask = mask
             else:
                 prev_mask = mask
 
@@ -110,15 +126,19 @@ class Receiver(object):
             time.sleep(1)
 
         print("Synchronization OK")
+        self.SYMBOL_ZERO_MASK = self.SYMBOL_ZERO_MASK * self.screen_mask
+        self.SYMBOL_ONE_MASK = self.SYMBOL_ONE_MASK * self.screen_mask
 
 
 def main():
     r = Receiver()
     # ret, frame = rcvr.screen_decoder.getCameraSnapshot()
     # rcvr.screen_decoder.displayFrame(frame)
+    r._compute_screen_mask()
+    r.do_receive()
     r.do_validate_data()
+
 
 if __name__ == "__main__":
     main()
-    print(test)
     input("")
