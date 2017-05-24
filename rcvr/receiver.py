@@ -15,7 +15,9 @@ class State(Enum):
 
 
 class Receiver(object):
-    CONVERGENCE_THRESHOLD = 10000
+    # At distance ~3.20m, np.sum of the thresholded image gives ~510000 (because values are 255)
+    # The threshold then needs to be around 500000
+    CONVERGENCE_THRESHOLD = 500000
     BLACK_THRESHOLD = 2000000
     DUMMY_MASK = np.zeros((480, 640), dtype=np.uint8)
     DUMMY_MASK[200:300, 200:400] = np.uint8(1)
@@ -100,6 +102,7 @@ def main():
     print("hi")
     # ret, frame = rcvr.screen_decoder.getCameraSnapshot()
     # rcvr.screen_decoder.displayFrame(frame)
+    r._compute_screen_mask()
     r.doReceive()
 
 if __name__ == "__main__":
