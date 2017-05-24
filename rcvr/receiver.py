@@ -1,17 +1,18 @@
 import collections
-import time
 from enum import Enum
 
 import cv.CV_GUI_Handler
 import cv.CV_Video_Capture_Handler
 import snd.transmitter
+from State_Machine import *
 from cv.ImageProcessing import *
 from utils.Symbols import *
 
 
 class State(Enum):
     IDLE = 'Idle'
-    SYNC = 'Sync'
+    SCREEN_DETECTION = 'Screen detection'
+    SYNC_CLOCK = 'Sync clock'
     RECEIVE = 'Receive'
     CHECK = 'Check'
     VALIDATE_DATA = 'Validate data'
@@ -27,6 +28,7 @@ class Receiver(object):
     DUMMY_MASK = np.dstack([DUMMY_MASK] * 3)
 
     def __init__(self):
+        State_Machine.__init__(self)
         self.cv_handler = cv.CV_GUI_Handler.OpenCvHandler()
         self.cap = cv.CV_Video_Capture_Handler.CV_Video_Capture_Handler()
         self.state = State.IDLE
@@ -41,7 +43,7 @@ class Receiver(object):
     def run(self):
         if self.state == State.IDLE:
             self.do_idle()
-        elif self.state == State.SYNC:
+        elif self.state == State.SYNC_CLOCK:
             self.do_sync()
         elif self.state == State.RECEIVE:
             self.do_receive()
@@ -119,6 +121,8 @@ def main():
     r.do_validate_data()
 
 if __name__ == "__main__":
-    main()
-    print(test)
+    # main()
+    print(time.time())
+    time.sleep(1)
+    print(time.time())
     input("")
