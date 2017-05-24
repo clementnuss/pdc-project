@@ -1,9 +1,9 @@
 import collections
-import math
 from enum import Enum
 
 import cv.CV_GUI_Handler
 from State_Machine import *
+from cv.ImageProcessing import *
 from utils.Symbols import *
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
@@ -35,6 +35,8 @@ class Transmitter(State_Machine):
         while True:
             if self.state == State.IDLE:
                 self.do_idle()
+            elif self.state == State.SCREEN_DETECTION:
+                self.do_find_screen()
             elif self.state == State.SYNC_CLOCK:
                 self.do_sync()
             elif self.state == State.SEND:
@@ -54,28 +56,40 @@ class Transmitter(State_Machine):
     def do_idle(self):
         time.sleep(1)
 
+    def do_find_screen(self):
+        """
+        Find the transmitter screen. When the screen detection algorithm has converged, the receiver displays
+        the ACK symbol and goes into clock sync state. When the transmitter side of the algorithm has converged, 
+        its screen displays the ACK symbol also.
+    
+        :return: 
+        """
+        self._compute_screen_mask()
+        self.cv_handler.display_hsv_color(S_ACK)
+        self.state = State.SYNC_CLOCK
+        return
+
     def do_sync(self):
-        self._align_clock()
+        """
+                Synchronize the receiver clock with the transmitter 
+
+                # 1. Transmitter screen is ACK
+                # 2. Transmitter screen blacks out -> data is going to be sent next second (epoch reference)
+                # 3. Receiver sleeps until next epoch second + half the transmission rate
+                # 4. Receiver wakes up and start sampling for data
+
+                :return: 
+                """
+
+        State_Machine._align_clock(self)
+
+        self.cv_handler.display_hsv_color()
 
         while True:
             current_time = time.time()
             logging.info(str(current_time))
 
             State_Machine.sleep_until_next_tick(self)
-
-    def _align_clock(self):
-        curr_time = time.time()
-
-        # Delay clock towards a whole time to increase sleep relative precision
-        while curr_time - np.fix(curr_time) > 0.3:
-            curr_time = time.time()
-
-        # Align clock on whole time
-        to_sleep = math.floor(curr_time + 1.0) - curr_time
-        logging.info(curr_time)
-        time.sleep(to_sleep)
-        self.clock_start = time.time()
-        logging.info("Clock start is at: " + str(self.clock_start))
 
     def do_send(self):
         byte_to_send = None
@@ -126,6 +140,33 @@ class Transmitter(State_Machine):
 
         logging.info("Received ACK from receiver device")
         self.state = State.SEND
+
+    def _compute_screen_mask(self):
+        converged = False
+        ret, frame = self.cap.readHSVFrame()
+        prev_mask = getMask(frame)
+
+        while not converged:
+            ret, frame = self.cap.readHSVFrame()
+            mask = getMask(frame)
+
+            s = np.sum(mask)
+            diff = np.sum(mask - prev_mask)
+            print("Mask sum: ", s)
+            print("Mask diff: ", diff)
+
+            if diff < Receiver.CONVERGENCE_THRESHOLD and s > Receiver.BLACK_THRESHOLD:
+                converged = True
+                self.screen_mask = mask
+            else:
+                prev_mask = mask
+
+            self.cv_handler.send_new_frame(mask)
+            time.sleep(1)
+
+        print("Synchronization OK")
+        self.SYMBOL_ZERO_MASK = self.SYMBOL_ZERO_MASK * self.screen_mask
+        self.SYMBOL_ONE_MASK = self.SYMBOL_ONE_MASK * self.screen_mask
 
     def _load_file(self, file_name):
 

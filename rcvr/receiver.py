@@ -3,7 +3,6 @@ from enum import Enum
 
 import cv.CV_GUI_Handler
 import cv.CV_Video_Capture_Handler
-import snd.transmitter
 from State_Machine import *
 from cv.ImageProcessing import *
 from utils.Symbols import *
@@ -11,20 +10,14 @@ from utils.Symbols import *
 
 class State(Enum):
     IDLE = 'Idle'
-    SCREEN_DETECTION = 'Screen detection'
-    SYNC_CLOCK = 'Sync clock'
+    SYNC_CLOCK = 'Sync Clock'
+    FIND_SCREEN = 'Find Screen'
     RECEIVE = 'Receive'
     CHECK = 'Check'
     VALIDATE_DATA = 'Validate data'
 
 
-def compute_score(masked_frame, color_mask) -> int:
-    diff = masked_frame - color_mask
-    diff = diff * diff
-    return np.sum(diff)
-
-
-class Receiver(object):
+class Receiver(State_Machine):
     # At distance ~3.20m, np.sum of the thresholded image gives ~510000 (because values are 255)
     # The threshold then needs to be around 500000
     CONVERGENCE_THRESHOLD = 500000
@@ -50,32 +43,59 @@ class Receiver(object):
         time.sleep(1)
 
     def run(self):
-        if self.state == State.IDLE:
-            self.do_idle()
-        elif self.state == State.SYNC_CLOCK:
-            self.do_sync()
-        elif self.state == State.RECEIVE:
-            self.do_receive()
-        elif self.state == State.CHECK:
-            self.do_check()
-        elif self.state == State.VALIDATE_DATA:
-            self.do_validate_data()
-        else:
-            raise NotImplementedError('Undefined receiver state')
+        while True:
+            if self.state == State.IDLE:
+                self.do_idle()
+            elif self.state == State.SYNC_CLOCK:
+                self.do_sync()
+            elif self.state == State.RECEIVE:
+                self.do_receive()
+            elif self.state == State.CHECK:
+                self.do_check()
+            elif self.state == State.VALIDATE_DATA:
+                self.do_validate_data()
+            else:
+                raise NotImplementedError('Undefined receiver state')
 
     def do_idle(self):
         pass
 
+    def do_find_screen(self):
+        """
+        Find the transmitter screen. When the screen detection algorithm has converged, the receiver displays
+        the ACK symbol and goes into clock sync state. When the transmitter side of the algorithm has converged, 
+        its screen displays the ACK symbol also.
+        
+        :return: 
+        """
+        self._compute_screen_mask()
+        self.cv_handler.display_hsv_color(S_ACK)
+        self.state = State.SYNC_CLOCK
+        return
+
     def do_sync(self):
         """
-        Compute the location of sender's screen. 
+        Synchronize the receiver clock with the transmitter 
+        
+        # 1. Transmitter screen is ACK
+        # 2. Transmitter screen blacks out -> data is going to be sent next second (epoch reference)
+        # 3. Receiver sleeps until next epoch second + half the transmission rate
+        # 4. Receiver wakes up and start sampling for data
+        
         :return: 
         """
 
-        pass
+        # Transmitter screen has blacked out
+        if False:
+            current_time = time.time()
+            State_Machine.clock_start = np.fix(current_time + 1.0) + State_Machine.SAMPLING_OFFSET
+            self.state = State.RECEIVE
+            time.sleep(State_Machine.clock_start - current_time)
 
     def do_receive(self):
-        while True:
+        symbol_count = 0
+        self.decoded_byte = 0
+        for i in range(0, 8):
             ret, frame = self.cap.readHSVFrame()
             masked_frame = frame * self.screen_mask
             self.cv_handler.send_new_frame(masked_frame)
@@ -83,8 +103,14 @@ class Receiver(object):
             one_score = compute_score(masked_frame, self.SYMBOL_ONE_MASK)
             if (zero_score > one_score):
                 print("0")
+                self.decoded_byte = (self.decoded_byte << 1) | 1
             else:
                 print("1")
+                self.decoded_byte = self.decoded_byte << 1
+            symbol_count = symbol_count + 1
+            State_Machine.sleep_until_next_tick(self)
+
+        self.state = State.VALIDATE_DATA
 
     def do_check(self):
         pass
@@ -97,7 +123,8 @@ class Receiver(object):
         else:
             self.cv_handler.display_hsv_color(S_NO_ACK)
 
-        time.sleep(snd.transmitter.TRANSMISSION_RATE)
+        self.decoded_sequence.append(self.decoded_byte)
+        State_Machine.sleep_until_next_tick(self)
         self.cv_handler.display_hsv_color(S_VOID)
         self.state = State.RECEIVE
 

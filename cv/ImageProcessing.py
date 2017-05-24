@@ -10,3 +10,9 @@ def getMask(frame):
     # Erode and dilate the image to remove noise from the HSV filtering
     kernel = np.ones((ERODE_KERNEL_SIZE, ERODE_KERNEL_SIZE), np.uint8)
     return cv2.morphologyEx(processed_frame, cv2.MORPH_OPEN, kernel)
+
+
+def compute_score(masked_frame, color_mask):
+    diff = masked_frame - color_mask
+    diff = diff * diff
+    return np.sum(diff)
