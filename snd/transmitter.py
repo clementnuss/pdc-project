@@ -3,18 +3,12 @@ import logging
 import time
 from enum import Enum
 
-import numpy as np
-
 import cv.CV_GUI_Handler
+from utils.Symbols import *
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
 
-S_VOID = np.array([[[np.uint8(0), np.uint8(0), np.uint8(0)]]])
-S_ZERO = np.array([[[np.uint8(180), np.uint8(255), np.uint8(255)]]])
-S_ONE = np.array([[[np.uint8(90), np.uint8(255), np.uint8(255)]]])
-
 TRANSMISSION_RATE = 1.0 / 15.0
-
 
 class State(Enum):
     IDLE = 'Idle'
