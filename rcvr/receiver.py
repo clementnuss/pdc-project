@@ -1,9 +1,12 @@
+import collections
 import time
 from enum import Enum
 
 import cv.CV_GUI_Handler
 import cv.CV_Video_Capture_Handler
+import snd.transmitter
 from cv.ImageProcessing import *
+from utils.Symbols import *
 
 
 class State(Enum):
@@ -11,7 +14,7 @@ class State(Enum):
     SYNC = 'Sync'
     RECEIVE = 'Receive'
     CHECK = 'Check'
-    WAIT = 'Wait'
+    VALIDATE_DATA = 'Validate data'
 
 
 class Receiver(object):
@@ -25,6 +28,8 @@ class Receiver(object):
         self.cv_handler = cv.CV_GUI_Handler.OpenCvHandler()
         self.cap = cv.CV_Video_Capture_Handler.CV_Video_Capture_Handler()
         self.state = State.IDLE
+        self.decoded_byte = 0
+        self.decoded_sequence = collections.deque
         self.bitCount = 0
         self.screen_mask = None
 
@@ -33,22 +38,22 @@ class Receiver(object):
 
     def run(self):
         if self.state == State.IDLE:
-            self.doIdle()
+            self.do_idle()
         elif self.state == State.SYNC:
-            self.doSync()
+            self.do_sync()
         elif self.state == State.RECEIVE:
-            self.doReceive()
+            self.do_receive()
         elif self.state == State.CHECK:
-            self.doCheck()
-        elif self.state == State.WAIT:
-            self.doWait()
+            self.do_check()
+        elif self.state == State.VALIDATE_DATA:
+            self.do_validate_data()
         else:
             raise NotImplementedError('Undefined receiver state')
 
-    def doIdle(self):
+    def do_idle(self):
         pass
 
-    def doSync(self):
+    def do_sync(self):
         """
         Compute the location of sender's screen. 
         :return: 
@@ -56,17 +61,29 @@ class Receiver(object):
 
         pass
 
-    def doReceive(self):
+    def do_receive(self):
         while True:
             ret, frame = self.cap.readHSVFrame()
             masked_frame = frame * self.DUMMY_MASK
             self.cv_handler.send_new_frame(masked_frame)
 
-    def doCheck(self):
+    def do_check(self):
         pass
 
-    def doWait(self):
-        pass
+    def do_validate_data(self):
+        data_is_valid = True
+
+        if data_is_valid:
+            self.cv_handler.display_hsv_color(S_ACK)
+        else:
+            self.cv_handler.display_hsv_color(S_NO_ACK)
+
+        time.sleep(snd.transmitter.TRANSMISSION_RATE)
+        self.cv_handler.display_hsv_color(S_VOID)
+        self.state = State.RECEIVE
+
+    def _compute_checksum(self):
+        return True
 
     def _compute_screen_mask(self):
         converged = False
@@ -93,14 +110,11 @@ class Receiver(object):
         print("Synchronization OK")
 
 
-
-
 def main():
     r = Receiver()
-    print("hi")
     # ret, frame = rcvr.screen_decoder.getCameraSnapshot()
     # rcvr.screen_decoder.displayFrame(frame)
-    r.doReceive()
+    r.do_validate_data()
 
 if __name__ == "__main__":
     main()
