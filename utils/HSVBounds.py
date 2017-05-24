@@ -19,4 +19,4 @@ class HSVBounds:
 
 
 SYNC_RANGE_CLEMENT = HSVBounds(np.uint8(64), np.uint8(130), np.uint8(126), np.uint8(255), np.uint8(111), np.uint8(255))
-SYNC_RANGE = HSVBounds(np.uint8(57), np.uint8(85), np.uint8(133), np.uint8(255), np.uint8(111), np.uint8(255))
+SYNC_RANGE = HSVBounds(np.uint8(0), np.uint8(30), np.uint8(50), np.uint8(255), np.uint8(200), np.uint8(255))

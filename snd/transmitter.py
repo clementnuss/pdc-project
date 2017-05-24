@@ -2,6 +2,7 @@ import collections
 from enum import Enum
 
 import cv.CV_GUI_Handler
+import cv.CV_Video_Capture_Handler
 from State_Machine import *
 from cv.ImageProcessing import *
 from utils.Symbols import *
@@ -20,9 +21,11 @@ class State(Enum):
 class Transmitter(State_Machine):
     def __init__(self, file_name):
         State_Machine.__init__(self)
-        self.state = State.IDLE
+        self.state = State.SCREEN_DETECTION
         self.cv_handler = cv.CV_GUI_Handler.OpenCvHandler()
+        self.cap = cv.CV_Video_Capture_Handler.CV_Video_Capture_Handler()
         self.byte_sequence = collections.deque()
+        self.byte_count = 0
         self.last_byte_sent = None
         self.receiver_ack = True
 
@@ -49,7 +52,7 @@ class Transmitter(State_Machine):
                 self.do_receive()
             elif self.state == State.WAIT_FOR_ACK:
                 logging.info("Transmitter branched in wait for ack mode")
-                self.do_wait()
+                self.do_wait_for_ack()
             else:
                 raise NotImplementedError('Undefined snd state')
 
@@ -82,12 +85,26 @@ class Transmitter(State_Machine):
                 """
 
         State_Machine._align_clock(self)
+        self.receiver_ack = False
 
-        self.cv_handler.display_hsv_color()
+        while not self.receiver_ack:
+            ret, frame = self.cap.readHSVFrame()
+            masked_frame = frame[:, :, 0] * self.screen_mask[:, :, 0]
 
-        while True:
-            current_time = time.time()
-            logging.info(str(current_time))
+            ack_score = compute_score(masked_frame, self.ACK_MASK)
+            no_ack_score = compute_score(masked_frame, self.NO_ACK_MASK)
+
+            logging.info("Ack score: " + str(ack_score) + " No ack score: " + str(no_ack_score))
+
+            if (ack_score < no_ack_score):
+                logging.info("Got ACK ")
+                self.receiver_ack = True
+
+                # Screen goes black, meaning that at next epoch second, receiver clock fires up and get in sync
+                self.cv_handler.display_hsv_color(S_VOID)
+                self.state = State.SEND
+            else:
+                logging.info("NO ACK")
 
             State_Machine.sleep_until_next_tick(self)
 
@@ -96,7 +113,8 @@ class Transmitter(State_Machine):
 
         if self.receiver_ack:
             self.receiver_ack = False
-            logging.info("Transmitting new data")
+            self.byte_count = self.byte_count + 1
+            logging.info("Transmitting byte: " + str(self.byte_count))
             byte_to_send = self.byte_sequence.popleft()
         else:
             logging.warning("Retransmitting previous data")
@@ -120,26 +138,40 @@ class Transmitter(State_Machine):
 
             if bit_to_send:
                 self.cv_handler.display_hsv_color(S_ONE)
-                print(1)
-                time.sleep(State_Machine.TRANSMISSION_RATE)
+                logging.info(1)
+                State_Machine.sleep_until_next_tick(self)
             else:
                 self.cv_handler.display_hsv_color(S_ZERO)
-                print(0)
-                time.sleep(State_Machine.TRANSMISSION_RATE)
+                logging.info(0)
+                State_Machine.sleep_until_next_tick(self)
 
     def do_receive(self):
         pass
 
-    def do_wait(self):
+    def do_wait_for_ack(self):
 
         self.cv_handler.display_hsv_color(S_VOID)
 
-        while not self.receiver_ack:
-            if input("press enter to trigger ack") != None:
-                self.receiver_ack = True
+        ret, frame = self.cap.readHSVFrame()
+        masked_frame = frame[:, :, 0] * self.screen_mask[:, :, 0]
 
-        logging.info("Received ACK from receiver device")
+        ack_score = compute_score(masked_frame, self.ACK_MASK)
+        no_ack_score = compute_score(masked_frame, self.NO_ACK_MASK)
+
+        logging.info("Ack score: " + str(ack_score) + " No ack score: " + str(no_ack_score))
+
+        if (ack_score < no_ack_score):
+            logging.info("Got ACK ")
+            self.receiver_ack = True
+            self.state = State.SEND
+        else:
+            self.receiver_ack = False
+            logging.info("NO ACK")
+
+        # If no ack then retransmit byte
+        # If ack transmit next byte
         self.state = State.SEND
+        State_Machine.sleep_until_next_tick(self)
 
     def _compute_screen_mask(self):
         converged = False
@@ -155,18 +187,20 @@ class Transmitter(State_Machine):
             print("Mask sum: ", s)
             print("Mask diff: ", diff)
 
-            if diff < Receiver.CONVERGENCE_THRESHOLD and s > Receiver.BLACK_THRESHOLD:
+            if diff < State_Machine.CONVERGENCE_THRESHOLD and s > State_Machine.BLACK_THRESHOLD:
                 converged = True
-                self.screen_mask = mask
+                self.screen_mask = np.uint8(mask / np.uint8(255))[..., np.newaxis]
             else:
                 prev_mask = mask
 
             self.cv_handler.send_new_frame(mask)
-            time.sleep(1)
+            time.sleep(0.2)
 
         print("Synchronization OK")
-        self.SYMBOL_ZERO_MASK = self.SYMBOL_ZERO_MASK * self.screen_mask
-        self.SYMBOL_ONE_MASK = self.SYMBOL_ONE_MASK * self.screen_mask
+        self.SYMBOL_ZERO_MASK = (State_Machine.SYMBOL_ZERO_MASK * self.screen_mask)[:, :, 0]
+        self.SYMBOL_ONE_MASK = (State_Machine.SYMBOL_ONE_MASK * self.screen_mask)[:, :, 0]
+        self.ACK_MASK = (SYMBOL_ACK_MASK * self.screen_mask)[:, :, 0]
+        self.NO_ACK_MASK = (SYMBOL_NO_ACK_MASK * self.screen_mask)[:, :, 0]
 
     def _load_file(self, file_name):
 
@@ -180,8 +214,8 @@ class Transmitter(State_Machine):
 def main():
     r = Transmitter("../data/dummyText1.txt")
     # r.state = State.SEND
-    # r.run()
-    r.do_sync()
+    r.run()
+    # r.do_sync()
 
 
 if __name__ == "__main__":

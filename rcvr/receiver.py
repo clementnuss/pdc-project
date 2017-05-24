@@ -20,8 +20,7 @@ class State(Enum):
 class Receiver(State_Machine):
     # At distance ~3.20m, np.sum of the thresholded image gives ~510000 (because values are 255)
     # The threshold then needs to be around 500000
-    CONVERGENCE_THRESHOLD = 500000
-    BLACK_THRESHOLD = 2000000
+
     DUMMY_MASK = np.zeros((480, 640), dtype=np.uint8)
     DUMMY_MASK[200:300, 200:400] = np.uint8(1)
     DUMMY_MASK = np.dstack([DUMMY_MASK] * 3)
@@ -157,6 +156,8 @@ class Receiver(State_Machine):
         print("Synchronization OK")
         self.SYMBOL_ZERO_MASK = self.SYMBOL_ZERO_MASK * self.screen_mask
         self.SYMBOL_ONE_MASK = self.SYMBOL_ONE_MASK * self.screen_mask
+        self.ACK_MASK = SYMBOL_ACK_MASK * self.screen_mask
+        self.NO_ACK_MASK = SYMBOL_NO_ACK_MASK * self.screen_mask
 
 
 def main():

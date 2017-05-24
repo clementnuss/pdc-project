@@ -13,6 +13,14 @@ def getMask(frame):
 
 
 def compute_score(masked_frame, color_mask):
-    diff = masked_frame - color_mask
+    # Convert to full size integers to perform substraction
+    diff = np.int32(masked_frame) - np.int32(color_mask)
     diff = diff * diff
     return np.sum(diff)
+
+
+if __name__ == '__main__':
+    a1 = np.full((2, 4, 3), fill_value=[1, 2, 3])
+    a2 = np.ones((4, 4, 3))
+
+    print(a1[:, :, 0])

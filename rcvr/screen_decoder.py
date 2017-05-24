@@ -3,11 +3,10 @@ import time
 import cv2
 import numpy as np
 
-import cv.CV_GUI_Handler
+import cv.CV_Video_Capture_Handler
 
 TRACKBAR_WINDOW = 'trackbars'
 
-cv_handler = cv.CV_GUI_Handler.OpenCvHandler()
 cap = cv.CV_Video_Capture_Handler.CV_Video_Capture_Handler()
 
 
@@ -56,11 +55,11 @@ def get_max_hsv():
 def main():
     while True:
         # Capture frame-by-frame
-        ret, frame = cap.readHSVFrame()
+        ret, frame = cap.readFrame()
 
         # Display the resulting frame
         hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        # cv2.imshow('hsv', hsv_img)
+        cv2.imshow('hsv', hsv_img)
 
         min_hsv = np.array(get_min_hsv(), np.uint8)
         max_hsv = np.array(get_max_hsv(), np.uint8)
@@ -79,7 +78,7 @@ def main():
                 x1, y1, x2, y2 = line[0]
                 cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
-        #cv2.imshow('original', frame)
+        cv2.imshow('original', frame)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -104,11 +103,11 @@ def pass_through():
         cv_handler.send_new_frame(frame)
 
 if __name__ == '__main__':
-    pass_through()
-    input("Press Enter")
-    # initialize_gui()
-    #main()
+    # pass_through()
+    initialize_gui()
+    main()
 
     # When everything done, release the capture
+    input("Press Enter")
     # cap.release()
     #cv2.destroyAllWindows()
