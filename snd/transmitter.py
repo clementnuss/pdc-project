@@ -1,4 +1,5 @@
 import collections
+import logging
 import time
 from enum import Enum
 
@@ -6,6 +7,9 @@ import numpy as np
 
 import cv.CV_GUI_Handler
 
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
+
+S_VOID = np.array([[[np.uint8(0), np.uint8(0), np.uint8(0)]]])
 S_ZERO = np.array([[[np.uint8(180), np.uint8(255), np.uint8(255)]]])
 S_ONE = np.array([[[np.uint8(90), np.uint8(255), np.uint8(255)]]])
 
@@ -17,7 +21,7 @@ class State(Enum):
     SYNC = 'Sync'
     SEND = 'Send'
     RECEIVE = 'Receive'
-    WAIT = 'Wait'
+    WAIT_FOR_ACK = 'Wait'
 
 
 class Transmitter(object):
@@ -25,34 +29,53 @@ class Transmitter(object):
         self.state = State.IDLE
         self.cv_handler = cv.CV_GUI_Handler.OpenCvHandler()
         self.byte_sequence = collections.deque()
+        self.last_byte_sent = None
+        self.receiver_ack = True
         print('Initialized snd at state ' + str(self.state))
 
         self._load_file(file_name)
 
     def run(self):
-        if self.state == State.IDLE:
-            self.doIdle()
-        elif self.state == State.SYNC:
-            self.doSync()
-        elif self.state == State.SEND:
-            self.doSend()
-        elif self.state == State.RECEIVE:
-            self.doReceive()
-        elif self.state == State.WAIT:
-            self.doWait()
-        else:
-            raise NotImplementedError('Undefined snd state')
+
+        while True:
+            if self.state == State.IDLE:
+                self.doIdle()
+            elif self.state == State.SYNC:
+                self.doSync()
+            elif self.state == State.SEND:
+                if len(self.byte_sequence) > 0:
+                    self.doSend()
+                else:
+                    logging.info("Transmission finished")
+                    self.state = State.IDLE
+            elif self.state == State.RECEIVE:
+                self.doReceive()
+            elif self.state == State.WAIT_FOR_ACK:
+                logging.info("Transmitter branched in wait for ack mode")
+                self.do_wait()
+            else:
+                raise NotImplementedError('Undefined snd state')
 
     def doIdle(self):
-        pass
+        time.sleep(1)
 
     def doSync(self):
         pass
 
     def doSend(self):
-        while len(self.byte_sequence) != 0:
+        byte_to_send = None
+
+        if self.receiver_ack:
+            self.receiver_ack = False
+            logging.info("Transmitting new data")
             byte_to_send = self.byte_sequence.popleft()
-            self._send_byte(byte_to_send)
+        else:
+            logging.warning("Retransmitting previous data")
+            byte_to_send = self.last_byte_sent
+
+        self.last_byte_sent = byte_to_send
+        self._send_byte(byte_to_send)
+        self.state = State.WAIT_FOR_ACK
 
     def _send_byte(self, b):
         """
@@ -75,12 +98,19 @@ class Transmitter(object):
                 print(0)
                 time.sleep(TRANSMISSION_RATE)
 
-
     def doReceive(self):
         pass
 
-    def doWait(self):
-        pass
+    def do_wait(self):
+
+        self.cv_handler.display_hsv_color(S_VOID)
+
+        while not self.receiver_ack:
+            if input("press enter to trigger ack") != None:
+                self.receiver_ack = True
+
+        logging.info("Received ACK from receiver device")
+        self.state = State.SEND
 
     def _load_file(self, file_name):
 
@@ -90,9 +120,11 @@ class Transmitter(object):
                 self.byte_sequence.append(byte)
                 byte = f.read(1)
 
+
 def main():
     r = Transmitter("../data/dummyText1.txt")
-    r.doSend()
+    r.state = State.SEND
+    r.run()
 
 
 if __name__ == "__main__":
