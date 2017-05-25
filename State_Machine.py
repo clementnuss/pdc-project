@@ -144,8 +144,8 @@ class State_Machine(object):
         State_Machine._compute_references_values(self)
 
     def _compute_references_values(self):
-        dx = self.screen_boundaries[1] - self.screen_boundaries[0]
-        dy = self.screen_boundaries[3] - self.screen_boundaries[2]
+        dx = self.screen_boundaries[1] - self.screen_boundaries[0] + 1
+        dy = self.screen_boundaries[3] - self.screen_boundaries[2] + 1
 
         self.SYMBOL_ONE_REF = np.full((dy, dx, 3), fill_value=S_ONE, dtype=np.uint8)
         self.SYMBOL_ZERO_REF = np.full((dy, dx, 3), fill_value=S_ZERO, dtype=np.uint8)

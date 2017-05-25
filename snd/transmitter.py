@@ -37,8 +37,6 @@ class Transmitter(State_Machine):
                 self.do_idle()
             elif self.state == State.SCREEN_DETECTION:
                 self.do_find_screen()
-            elif self.state == State.STAND_BY:
-                self.do_stand_by()
             elif self.state == State.SYNC_CLOCK:
                 self.do_sync()
             elif self.state == State.SEND:

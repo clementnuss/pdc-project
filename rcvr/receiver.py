@@ -113,7 +113,7 @@ class Receiver(State_Machine):
             masked_frame = frame * self.screen_mask
             self.cv_handler.display_hsv_frame(superimpose(self.VOID_MASK, masked_frame[::10, ::10]))
 
-            zero_score, one_score = State_Machine.get_symbols_scores(self, self.SYMBOL_ZERO_MASK,self.SYMBOL_ONE_MASK)
+            zero_score, one_score = State_Machine.get_symbols_scores(self, self.SYMBOL_ZERO_REF, self.SYMBOL_ONE_REF)
 
             if (zero_score < one_score):
                 logging.info("read 0 at time " + str(time.time()))
