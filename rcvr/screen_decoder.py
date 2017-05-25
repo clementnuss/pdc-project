@@ -163,9 +163,9 @@ def pass_through():
 
 if __name__ == '__main__':
     time.sleep(0.5)
-    pass_through()
-    # initialize_gui()
-    # main_contour()
+    # pass_through()
+    initialize_gui()
+    main_contour()
 
     # When everything done, release the capture
     input("Press Enter")
