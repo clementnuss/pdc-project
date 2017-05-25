@@ -67,12 +67,13 @@ class Receiver(State_Machine):
         
         :return: 
         """
-        self.cv_handler.display_hsv_color(S_NO_ACK)
-        State_Machine.compute_screen_mask(self, ONE_RANGE)
+        self.cv_handler.display_hsv_color(S_VOID)
+        State_Machine.compute_screen_boundaries(self, ONE_RANGE_NIGHT)
+        self.cap.set_screen_boundaries(self.screen_boundaries)
+
         self.cv_handler.display_hsv_color(S_ACK)
         self.state = State.SYNC_CLOCK
         return
-
 
     def do_sync(self):
         """
@@ -86,7 +87,7 @@ class Receiver(State_Machine):
         :return: 
         """
 
-        void_score, ack_score = State_Machine.get_symbols_scores(self, self.VOID_MASK, self.ACK_MASK)
+        void_score, ack_score = State_Machine.get_symbols_scores(self, self.VOID_REF, self.ACK_REF)
 
         # Transmitter screen has blacked out
         if void_score < ack_score:
@@ -100,12 +101,10 @@ class Receiver(State_Machine):
         symbol_count = 0
         self.decoded_byte = 0
         for i in range(0, 8):
-            ret, frame = self.cap.readHSVFrame()
-            masked_frame = frame * self.screen_mask
-            #self.cv_handler.send_new_frame(masked_frame)
-            zero_score = compute_score(masked_frame, self.SYMBOL_ZERO_MASK)
-            one_score = compute_score(masked_frame, self.SYMBOL_ONE_MASK)
-            if (zero_score > one_score):
+
+            zero_score, one_score = State_Machine.get_symbols_scores(self, self.SYMBOL_ZERO_REF, self.SYMBOL_ONE_REF)
+
+            if (zero_score < one_score):
                 print("0")
                 self.decoded_byte = (self.decoded_byte << 1) | 1
             else:

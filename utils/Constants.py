@@ -3,5 +3,6 @@ HEIGHT = 480
 
 DEBUG = True
 SIMULATE = False
+USE_MASK = False
 
 SIMULATION_HANDLER = None

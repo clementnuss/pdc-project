@@ -11,9 +11,9 @@ def getMask(frame, color_range):
     return cv2.morphologyEx(processed_frame, cv2.MORPH_OPEN, kernel)
 
 
-def compute_score(masked_frame, color_mask):
+def compute_score(masked_frame, color_ref):
     # Convert to full size integers to perform substraction
-    diff = np.int32(masked_frame) - np.int32(color_mask)
+    diff = np.int32(masked_frame) - np.int32(color_ref)
     diff = diff * diff
     return np.sum(diff)
 
@@ -23,6 +23,10 @@ def superimpose(big_frame, small_frame):
     big_frame[0:row, 0:col, :] = small_frame
 
     return big_frame
+
+
+def crop(frame, boundaries):
+    return frame[boundaries[2]:boundaries[3] + 1, boundaries[0]:boundaries[1] + 1, :]
 
 if __name__ == '__main__':
     a1 = np.full((4, 4, 3), fill_value=255, dtype=np.uint8)

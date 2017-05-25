@@ -68,7 +68,9 @@ class Transmitter(State_Machine):
         """
 
         self.cv_handler.display_hsv_color(S_VOID)
-        State_Machine.compute_screen_mask(self, ZERO_RANGE)
+        State_Machine.compute_screen_boundaries(self, ZERO_RANGE_NIGHT)
+        self.cap.set_screen_boundaries(self.screen_boundaries)
+
         self.cv_handler.display_hsv_color(S_ACK)
         self.state = State.SYNC_CLOCK
         return
