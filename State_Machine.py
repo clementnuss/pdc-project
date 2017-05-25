@@ -191,6 +191,7 @@ class State_Machine(object):
         logging.info(curr_time)
         time.sleep(to_sleep)
 
+
     def sleep_until_next_tick(self):
         self.tick_count = self.tick_count + 1
         self.log_count = self.log_count + 1

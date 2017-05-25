@@ -5,6 +5,7 @@ from State_Machine import *
 from cv.ImageProcessing import *
 from utils.Symbols import *
 
+logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=logging.INFO)
 
 class State(Enum):
     IDLE = 'Idle'
@@ -21,7 +22,7 @@ class Receiver(State_Machine):
     # At distance ~3.20m, np.sum of the thresholded image gives ~510000 (because values are 255)
     # The threshold then needs to be around 500000
 
-    DUMMY_MASK = np.zeros((WIDTH, HEIGHT), dtype=np.uint8)
+    DUMMY_MASK = np.zeros((HEIGHT, WIDTH), dtype=np.uint8)
     DUMMY_MASK[200:300, 200:400] = np.uint8(1)
     DUMMY_MASK = np.dstack([DUMMY_MASK] * 3)
 
@@ -30,7 +31,8 @@ class Receiver(State_Machine):
 
         self.state = State.SCREEN_DETECTION
         self.decoded_byte = 0
-        self.decoded_sequence = collections.deque
+        self.decoded_byte_count = 0
+        self.decoded_sequence = collections.deque()
         self.bitCount = 0
         self.screen_mask = None
 
@@ -42,8 +44,6 @@ class Receiver(State_Machine):
             if self.state == State.IDLE:
                 self.do_idle()
             elif self.state == State.SCREEN_DETECTION:
-                self.do_find_screen()
-            elif self.state == State.STAND_BY:
                 self.do_find_screen()
             elif self.state == State.SYNC_CLOCK:
                 self.do_sync()
@@ -92,23 +92,34 @@ class Receiver(State_Machine):
         # Transmitter screen has blacked out
         if void_score < ack_score:
             current_time = time.time()
-            State_Machine.clock_start = np.fix(current_time + 1.0) + State_Machine.SAMPLING_OFFSET
+            self.clock_start = np.fix(current_time + 1) + State_Machine.SAMPLING_OFFSET
+
             self.state = State.RECEIVE
-            logging.info("Clocks firing up in less than a second !")
-            time.sleep(State_Machine.clock_start - current_time)
+            self.cv_handler.display_hsv_color(S_VOID)
+            logging.info("Clock start is: "+ str(self.clock_start) +" Time is " + str(current_time))
+            State_Machine.sleep_until_next_tick(self)
 
     def do_receive(self):
+
+        self.decoded_byte_count = self.decoded_byte_count + 1
+
+        logging.info("Decoding byte number " + str(self.decoded_byte_count))
+
         symbol_count = 0
         self.decoded_byte = 0
-        for i in range(0, 8):
 
-            zero_score, one_score = State_Machine.get_symbols_scores(self, self.SYMBOL_ZERO_REF, self.SYMBOL_ONE_REF)
+        for i in range(0, 8):
+            ret, frame = self.cap.readHSVFrame()
+            masked_frame = frame * self.screen_mask
+            self.cv_handler.display_hsv_frame(superimpose(self.VOID_MASK, masked_frame[::10, ::10]))
+
+            zero_score, one_score = State_Machine.get_symbols_scores(self, self.SYMBOL_ZERO_MASK,self.SYMBOL_ONE_MASK)
 
             if (zero_score < one_score):
-                print("0")
+                logging.info("read 0 at time " + str(time.time()))
                 self.decoded_byte = (self.decoded_byte << 1) | 1
             else:
-                print("1")
+                logging.info(" read 1 at time " + str(time.time()))
                 self.decoded_byte = self.decoded_byte << 1
             symbol_count = symbol_count + 1
             State_Machine.sleep_until_next_tick(self)
@@ -123,13 +134,16 @@ class Receiver(State_Machine):
 
         if data_is_valid:
             self.cv_handler.display_hsv_color(S_ACK)
+            self.decoded_sequence.append(self.decoded_byte)
+            logging.info("Sent ACK to transmitter")
         else:
             self.cv_handler.display_hsv_color(S_NO_ACK)
+            logging.info("Sent NO ACK to transmitter")
 
-        self.decoded_sequence.append(self.decoded_byte)
         State_Machine.sleep_until_next_tick(self)
         self.cv_handler.display_hsv_color(S_VOID)
         self.state = State.RECEIVE
+        State_Machine.sleep_until_next_tick(self)
 
     def _compute_checksum(self):
         return True

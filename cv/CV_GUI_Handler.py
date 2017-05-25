@@ -25,7 +25,7 @@ class OpenCvHandler:
 
     def wait_key_func(self):
         print("Initializing main window")
-        cv2.namedWindow(MAIN_WINDOW, cv2.WINDOW_GUI_EXPANDED | cv2.WINDOW_KEEPRATIO)
+        cv2.namedWindow(MAIN_WINDOW, cv2.WINDOW_KEEPRATIO)
         if Constants.SIMULATE:
             cv2.namedWindow(SECONDARY_WINDOW, cv2.WINDOW_GUI_EXPANDED | cv2.WINDOW_KEEPRATIO)
         cv2.startWindowThread()
@@ -44,8 +44,8 @@ class OpenCvHandler:
     def __init__(self):
         if not OpenCvHandler.instance:
             OpenCvHandler.instance = OpenCvHandler.__CV_Handler
-            self.instance.new_frame = np.full((WIDTH, HEIGHT, 3), (255, 255, 255), dtype=np.uint8)
-            self.instance.scnd_new_frame = np.full((WIDTH, HEIGHT, 3), (255, 255, 255), dtype=np.uint8)
+            self.instance.new_frame = np.full((HEIGHT, WIDTH, 3), (255, 255, 255), dtype=np.uint8)
+            self.instance.scnd_new_frame = np.full((HEIGHT, WIDTH, 3), (255, 255, 255), dtype=np.uint8)
             self.instance.refresh = True
             self.instance.refresh_scnd = True
             self.instance.waiting_thread = threading.Thread(target=self.wait_key_func)
