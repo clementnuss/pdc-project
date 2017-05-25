@@ -10,7 +10,7 @@ from utils.Symbols import *
 
 
 class State_Machine(object):
-    TRANSMISSION_RATE = 1.0 / 10.0
+    TRANSMISSION_RATE = 1.0 / 5.0
     SAMPLING_OFFSET = TRANSMISSION_RATE / 2.0
     CONVERGENCE_THRESHOLD = 10000
     BLACK_THRESHOLD = 200000
@@ -105,9 +105,9 @@ class State_Machine(object):
         current_time = time.time()
         sleep_amount = (self.tick_count * State_Machine.TRANSMISSION_RATE + self.clock_start) - current_time
 
-        if self.log_count > State_Machine.TRANSMISSION_RATE:
+        if self.log_count > 0:
             self.log_count = 0
-            logging.info("Going to sleep for : " + str(sleep_amount) + " seconds.")
+            logging.info("Going to sleep for : " + str(sleep_amount) + " seconds. Time is " + str(current_time))
 
         if sleep_amount < 0:
             logging.warning("Skipping sleep time !")

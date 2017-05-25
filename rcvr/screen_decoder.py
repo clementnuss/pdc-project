@@ -55,15 +55,16 @@ def get_max_hsv():
 def main():
     while True:
         # Capture frame-by-frame
-        ret, frame = cap.readFrame()
-
+        ret, frame = cap.readHSVFrame()
+        if frame is None:
+            continue
         # Display the resulting frame
-        hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        cv2.imshow('hsv', hsv_img)
+        #hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        cv2.imshow('hsv', frame)
 
         min_hsv = np.array(get_min_hsv(), np.uint8)
         max_hsv = np.array(get_max_hsv(), np.uint8)
-        frame_thresholded = cv2.inRange(hsv_img, min_hsv, max_hsv)
+        frame_thresholded = cv2.inRange(frame, min_hsv, max_hsv)
 
         # We erode and dilate the image to remove noise from the HSV filtering More info here:
         # http://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_morphological_ops/py_morphological_ops.html
@@ -100,10 +101,14 @@ def pass_through():
             print("fps: ", fps)
             frame_count = 0
 
-        cv_handler.send_new_frame(frame)
+        cv2.imshow('pass through', frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
 
 if __name__ == '__main__':
-    # pass_through()
+    #pass_through()
     initialize_gui()
     main()
 
