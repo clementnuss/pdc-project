@@ -170,12 +170,20 @@ class State_Machine(object):
 
         return ack_score, no_ack_score
 
-    def get_symbols_scores(self, first_symbol, second_symbol):
+    def get_masked_symbols_scores(self, first_symbol, second_symbol):
         ret, frame = self.cap.readHSVFrame()
         masked_frame = frame * self.screen_mask
 
         first_score = compute_score(masked_frame, first_symbol)
         second_score = compute_score(masked_frame, second_symbol)
+
+        return first_score, second_score
+
+    def get_symbols_scores(self, first_symbol, second_symbol):
+        ret, frame = self.cap.readHSVFrame()
+
+        first_score = compute_score(frame, first_symbol)
+        second_score = compute_score(frame, second_symbol)
 
         return first_score, second_score
 
