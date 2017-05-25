@@ -3,6 +3,7 @@ import time
 
 import cv2
 import numpy as np
+import scipy.misc as scm
 
 from utils import Constants
 
@@ -32,7 +33,7 @@ class OpenCvHandler:
             if self.refresh:
                 cv2.imshow(MAIN_WINDOW, self.instance.new_frame)
                 self.instance.refresh = False
-            if self.refresh_scnd:
+            if self.refresh_scnd and Constants.SIMULATE:
                 cv2.imshow(SECONDARY_WINDOW, self.instance.scnd_new_frame)
                 self.instance.refresh_scnd = False
             if (cv2.waitKey(1) & 0xFF) == 27:
@@ -82,6 +83,10 @@ class OpenCvHandler:
         color_frame = np.full((HEIGHT, WIDTH, 3), converted_color, dtype=np.uint8)
         self.send_new_frame(color_frame)
 
+    def display_hsv_frame(self, hsvframe):
+        resized_frame = scm.imresize(hsvframe, (WIDTH, HEIGHT), interp='bilinear')
+        resized_frame = cv2.cvtColor(resized_frame, cv2.COLOR_HSV2BGR)
+        self.send_new_frame(resized_frame)
 
 if __name__ == '__main__':
     test = np.zeros((1, 1, 3))

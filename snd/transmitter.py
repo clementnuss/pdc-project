@@ -1,11 +1,7 @@
 import collections
 from enum import Enum
 
-import cv.CV_GUI_Handler
-import cv.CV_Video_Capture_Handler
 from State_Machine import *
-from cv.ImageProcessing import *
-from utils import Constants
 from utils.Symbols import *
 
 logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=logging.INFO)
@@ -14,6 +10,7 @@ logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=lo
 class State(Enum):
     IDLE = 'Idle'
     SCREEN_DETECTION = 'Screen detection'
+    STAND_BY = 'Stand by'
     SYNC_CLOCK = 'Sync clock'
     SEND = 'Send'
     RECEIVE = 'Receive'
@@ -24,13 +21,6 @@ class Transmitter(State_Machine):
     def __init__(self, file_name):
         State_Machine.__init__(self)
         self.state = State.SCREEN_DETECTION
-        if Constants.SIMULATE:
-            simulation_handler = Constants.SIMULATION_HANDLER
-            self.cv_handler = simulation_handler.tmtr
-            self.cap = simulation_handler.tmtr
-        else:
-            self.cv_handler = cv.CV_GUI_Handler.OpenCvHandler()
-            self.cap = cv.CV_Video_Capture_Handler.CV_Video_Capture_Handler()
         self.byte_sequence = collections.deque()
         self.byte_count = 0
         self.last_byte_sent = None
@@ -47,6 +37,8 @@ class Transmitter(State_Machine):
                 self.do_idle()
             elif self.state == State.SCREEN_DETECTION:
                 self.do_find_screen()
+            elif self.state == State.STAND_BY:
+                self.do_stand_by()
             elif self.state == State.SYNC_CLOCK:
                 self.do_sync()
             elif self.state == State.SEND:
@@ -74,7 +66,9 @@ class Transmitter(State_Machine):
     
         :return: 
         """
-        self._compute_screen_mask()
+
+        self.cv_handler.display_hsv_color(S_VOID)
+        State_Machine.compute_screen_mask(self, ZERO_RANGE)
         self.cv_handler.display_hsv_color(S_ACK)
         self.state = State.SYNC_CLOCK
         return
@@ -95,11 +89,8 @@ class Transmitter(State_Machine):
         self.receiver_ack = False
 
         while not self.receiver_ack:
-            ret, frame = self.cap.readHSVFrame()
-            masked_frame = frame[:, :, 0] * self.screen_mask[:, :, 0]
 
-            ack_score = compute_score(masked_frame, self.ACK_MASK)
-            no_ack_score = compute_score(masked_frame, self.NO_ACK_MASK)
+            ack_score, no_ack_score = State_Machine.get_ack_scores(self)
 
             logging.info("Ack score: " + str(ack_score) + " No ack score: " + str(no_ack_score))
 
@@ -159,11 +150,7 @@ class Transmitter(State_Machine):
 
         self.cv_handler.display_hsv_color(S_VOID)
 
-        ret, frame = self.cap.readHSVFrame()
-        masked_frame = frame[:, :, 0] * self.screen_mask[:, :, 0]
-
-        ack_score = compute_score(masked_frame, self.ACK_MASK)
-        no_ack_score = compute_score(masked_frame, self.NO_ACK_MASK)
+        ack_score, no_ack_score = State_Machine.get_ack_scores(self)
 
         logging.info("Ack score: " + str(ack_score) + " No ack score: " + str(no_ack_score))
 
@@ -180,35 +167,6 @@ class Transmitter(State_Machine):
         self.state = State.SEND
         State_Machine.sleep_until_next_tick(self)
 
-    def _compute_screen_mask(self):
-        converged = False
-        ret, frame = self.cap.readHSVFrame()
-        prev_mask = getMask(frame)
-
-        while not converged:
-            ret, frame = self.cap.readHSVFrame()
-            mask = getMask(frame)
-
-            s = np.sum(mask)
-            diff = np.sum(mask - prev_mask)
-            print("Mask sum: ", s)
-            print("Mask diff: ", diff)
-
-            if diff < State_Machine.CONVERGENCE_THRESHOLD and s > State_Machine.BLACK_THRESHOLD:
-                converged = True
-                self.screen_mask = np.uint8(mask / np.uint8(255))[..., np.newaxis]
-            else:
-                prev_mask = mask
-
-            if not Constants.SIMULATE:
-                self.cv_handler.send_new_frame(mask)
-            time.sleep(0.2)
-
-        logging.info("Synchronization OK")
-        self.SYMBOL_ZERO_MASK = (State_Machine.SYMBOL_ZERO_MASK * self.screen_mask)[:, :, 0]
-        self.SYMBOL_ONE_MASK = (State_Machine.SYMBOL_ONE_MASK * self.screen_mask)[:, :, 0]
-        self.ACK_MASK = (SYMBOL_ACK_MASK * self.screen_mask)[:, :, 0]
-        self.NO_ACK_MASK = (SYMBOL_NO_ACK_MASK * self.screen_mask)[:, :, 0]
 
     def _load_file(self, file_name):
 

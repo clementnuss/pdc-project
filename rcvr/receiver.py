@@ -1,21 +1,17 @@
 import collections
 from enum import Enum
 
-import cv.CV_GUI_Handler
-import cv.CV_Video_Capture_Handler
 from State_Machine import *
 from cv.ImageProcessing import *
-from utils.Constants import *
 from utils.Symbols import *
-from utils import Constants
 
 
 class State(Enum):
     IDLE = 'Idle'
-    SCREEN_DETECTION_1 = 'Screen detection - phase 1'
-    SCREEN_DETECTION_2 = 'Screen detection - phase 2'
-    SYNC_CLOCK = 'Sync Clock'
-    FIND_SCREEN = 'Find Screen'
+    SCREEN_DETECTION = 'Screen detection'
+    SCREEN_STAND_BY = 'Stand by'
+    SYNC_CLOCK = 'Sync clock'
+    FIND_SCREEN = 'Find screen'
     RECEIVE = 'Receive'
     CHECK = 'Check'
     VALIDATE_DATA = 'Validate data'
@@ -29,20 +25,10 @@ class Receiver(State_Machine):
     DUMMY_MASK[200:300, 200:400] = np.uint8(1)
     DUMMY_MASK = np.dstack([DUMMY_MASK] * 3)
 
-    SYMBOL_ZERO_MASK = np.full((HEIGHT, WIDTH, 3), fill_value=S_ZERO, dtype=np.uint8)
-    SYMBOL_ONE_MASK = np.full((HEIGHT, WIDTH, 3), fill_value=S_ONE, dtype=np.uint8)
-
     def __init__(self):
         State_Machine.__init__(self)
-        if SIMULATE:
-            simulation_handler = Constants.SIMULATION_HANDLER
-            self.cv_handler = simulation_handler.rcvr
-            self.cap = simulation_handler.rcvr
-        else:
-            self.cv_handler = cv.CV_GUI_Handler.OpenCvHandler()
-            self.cap = cv.CV_Video_Capture_Handler.CV_Video_Capture_Handler()
 
-        self.state = State.SCREEN_DETECTION_1
+        self.state = State.SCREEN_DETECTION
         self.decoded_byte = 0
         self.decoded_sequence = collections.deque
         self.bitCount = 0
@@ -55,9 +41,9 @@ class Receiver(State_Machine):
         while True:
             if self.state == State.IDLE:
                 self.do_idle()
-            elif self.state == State.SCREEN_DETECTION_1:
+            elif self.state == State.SCREEN_DETECTION:
                 self.do_show_screen()
-            elif self.state == State.SCREEN_DETECTION_2:
+            elif self.state == State.STAND_BY:
                 self.do_find_screen()
             elif self.state == State.SYNC_CLOCK:
                 self.do_sync()
@@ -81,17 +67,12 @@ class Receiver(State_Machine):
         
         :return: 
         """
-        self._compute_screen_mask()
+        self.cv_handler.display_hsv_color(S_NO_ACK)
+        State_Machine.compute_screen_mask(self, ONE_RANGE)
         self.cv_handler.display_hsv_color(S_ACK)
         self.state = State.SYNC_CLOCK
         return
 
-    def do_show_screen(self):
-        self.cv_handler.display_hsv_color(S_SYNC)
-        input("Press a key when the transmitter has detected the receiver")
-        # TODO: change the next state back to SCREEN_DETECTION_2
-        self.state = State.VALIDATE_DATA
-        return
 
     def do_sync(self):
         """
@@ -105,11 +86,14 @@ class Receiver(State_Machine):
         :return: 
         """
 
+        void_score, ack_score = State_Machine.get_symbols_scores(self, self.VOID_MASK, self.ACK_MASK)
+
         # Transmitter screen has blacked out
-        if False:
+        if void_score < ack_score:
             current_time = time.time()
             State_Machine.clock_start = np.fix(current_time + 1.0) + State_Machine.SAMPLING_OFFSET
             self.state = State.RECEIVE
+            logging.info("Clocks firing up in less than a second !")
             time.sleep(State_Machine.clock_start - current_time)
 
     def do_receive(self):
@@ -150,36 +134,6 @@ class Receiver(State_Machine):
 
     def _compute_checksum(self):
         return True
-
-    def _compute_screen_mask(self):
-        converged = False
-        ret, frame = self.cap.readHSVFrame()
-        prev_mask = getMask(frame)
-
-        while not converged:
-            ret, frame = self.cap.readHSVFrame()
-            mask = getMask(frame)
-
-            s = np.sum(mask)
-            diff = np.sum(mask - prev_mask)
-            print("Mask sum: ", s)
-            print("Mask diff: ", diff)
-
-            if diff < State_Machine.CONVERGENCE_THRESHOLD and s > State_Machine.BLACK_THRESHOLD:
-                converged = True
-                self.screen_mask = np.uint8(mask / np.uint8(255))[..., np.newaxis]
-            else:
-                prev_mask = mask
-
-            if not SIMULATE:
-                self.cv_handler.send_new_frame(mask)
-            time.sleep(0.2)
-
-        print("Synchronization OK")
-        self.SYMBOL_ZERO_MASK = self.SYMBOL_ZERO_MASK * self.screen_mask
-        self.SYMBOL_ONE_MASK = self.SYMBOL_ONE_MASK * self.screen_mask
-        self.ACK_MASK = SYMBOL_ACK_MASK * self.screen_mask
-        self.NO_ACK_MASK = SYMBOL_NO_ACK_MASK * self.screen_mask
 
 
 def main():

@@ -1,12 +1,11 @@
 import cv2
 import numpy as np
 
-from utils.HSVBounds import SYNC_RANGE
-
 ERODE_KERNEL_SIZE = 5
 
-def getMask(frame):
-    processed_frame = cv2.inRange(frame, SYNC_RANGE.min_bounds(), SYNC_RANGE.max_bounds())
+
+def getMask(frame, color_range):
+    processed_frame = cv2.inRange(frame, color_range.min_bounds(), color_range.max_bounds())
     # Erode and dilate the image to remove noise from the HSV filtering
     kernel = np.ones((ERODE_KERNEL_SIZE, ERODE_KERNEL_SIZE), np.uint8)
     return cv2.morphologyEx(processed_frame, cv2.MORPH_OPEN, kernel)
@@ -19,8 +18,16 @@ def compute_score(masked_frame, color_mask):
     return np.sum(diff)
 
 
-if __name__ == '__main__':
-    a1 = np.full((2, 4, 3), fill_value=[1, 2, 3])
-    a2 = np.ones((4, 4, 3))
+def superimpose(big_frame, small_frame):
+    row, col, depth = small_frame.shape
+    big_frame[0:row, 0:col, :] = small_frame
 
-    print(a1[:, :, 0])
+    return big_frame
+
+if __name__ == '__main__':
+    a1 = np.full((4, 4, 3), fill_value=255, dtype=np.uint8)
+    a2 = np.zeros((2, 2, 1), dtype=np.uint8)
+
+    a1[0:2, 0:2, :] = a2
+
+    print(a1)
