@@ -5,9 +5,11 @@ import cv.CV_GUI_Handler
 import cv.CV_Video_Capture_Handler
 from State_Machine import *
 from cv.ImageProcessing import *
+from utils import Constants
 from utils.Symbols import *
 
-logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
+logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=logging.INFO)
+
 
 class State(Enum):
     IDLE = 'Idle'
@@ -22,14 +24,19 @@ class Transmitter(State_Machine):
     def __init__(self, file_name):
         State_Machine.__init__(self)
         self.state = State.SCREEN_DETECTION
-        self.cv_handler = cv.CV_GUI_Handler.OpenCvHandler()
-        self.cap = cv.CV_Video_Capture_Handler.CV_Video_Capture_Handler()
+        if Constants.SIMULATE:
+            simulation_handler = Constants.SIMULATION_HANDLER
+            self.cv_handler = simulation_handler.tmtr
+            self.cap = simulation_handler.tmtr
+        else:
+            self.cv_handler = cv.CV_GUI_Handler.OpenCvHandler()
+            self.cap = cv.CV_Video_Capture_Handler.CV_Video_Capture_Handler()
         self.byte_sequence = collections.deque()
         self.byte_count = 0
         self.last_byte_sent = None
         self.receiver_ack = True
 
-        print('Initialized snd at state ' + str(self.state))
+        logging.info('Initialized snd at state ' + str(self.state))
 
         self._load_file(file_name)
 
@@ -61,7 +68,7 @@ class Transmitter(State_Machine):
 
     def do_find_screen(self):
         """
-        Find the transmitter screen. When the screen detection algorithm has converged, the receiver displays
+        Find the receiver screen. When the screen detection algorithm has converged, the receiver displays
         the ACK symbol and goes into clock sync state. When the transmitter side of the algorithm has converged, 
         its screen displays the ACK symbol also.
     
@@ -161,7 +168,7 @@ class Transmitter(State_Machine):
         logging.info("Ack score: " + str(ack_score) + " No ack score: " + str(no_ack_score))
 
         if (ack_score < no_ack_score):
-            logging.info("Got ACK ")
+            logging.info("Got ACK")
             self.receiver_ack = True
             self.state = State.SEND
         else:
@@ -193,10 +200,11 @@ class Transmitter(State_Machine):
             else:
                 prev_mask = mask
 
-            self.cv_handler.send_new_frame(mask)
+            if not Constants.SIMULATE:
+                self.cv_handler.send_new_frame(mask)
             time.sleep(0.2)
 
-        print("Synchronization OK")
+        logging.info("Synchronization OK")
         self.SYMBOL_ZERO_MASK = (State_Machine.SYMBOL_ZERO_MASK * self.screen_mask)[:, :, 0]
         self.SYMBOL_ONE_MASK = (State_Machine.SYMBOL_ONE_MASK * self.screen_mask)[:, :, 0]
         self.ACK_MASK = (SYMBOL_ACK_MASK * self.screen_mask)[:, :, 0]

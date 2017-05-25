@@ -4,9 +4,12 @@ import time
 import cv2
 import numpy as np
 
+from utils import Constants
+
 WIDTH = 800
 HEIGHT = 600
 MAIN_WINDOW = 'main_window'
+SECONDARY_WINDOW = 'secondary_window'
 
 
 class OpenCvHandler:
@@ -21,12 +24,17 @@ class OpenCvHandler:
 
     def wait_key_func(self):
         print("Initializing main window")
-        cv2.namedWindow(MAIN_WINDOW)
+        cv2.namedWindow(MAIN_WINDOW, cv2.WINDOW_GUI_EXPANDED | cv2.WINDOW_KEEPRATIO)
+        if Constants.SIMULATE:
+            cv2.namedWindow(SECONDARY_WINDOW, cv2.WINDOW_GUI_EXPANDED | cv2.WINDOW_KEEPRATIO)
         cv2.startWindowThread()
         while True:
             if self.refresh:
                 cv2.imshow(MAIN_WINDOW, self.instance.new_frame)
                 self.instance.refresh = False
+            if self.refresh_scnd:
+                cv2.imshow(SECONDARY_WINDOW, self.instance.scnd_new_frame)
+                self.instance.refresh_scnd = False
             if (cv2.waitKey(1) & 0xFF) == 27:
                 break
         print("Escape key pressed - terminating the GUI")
@@ -35,9 +43,10 @@ class OpenCvHandler:
     def __init__(self):
         if not OpenCvHandler.instance:
             OpenCvHandler.instance = OpenCvHandler.__CV_Handler
-            self.videocapture = cv2.VideoCapture(0)
             self.instance.new_frame = np.full((WIDTH, HEIGHT, 3), (255, 255, 255), dtype=np.uint8)
+            self.instance.scnd_new_frame = np.full((WIDTH, HEIGHT, 3), (255, 255, 255), dtype=np.uint8)
             self.instance.refresh = True
+            self.instance.refresh_scnd = True
             self.instance.waiting_thread = threading.Thread(target=self.wait_key_func)
             self.instance.waiting_thread.setDaemon(True)
             self.instance.waiting_thread.start()
@@ -54,6 +63,13 @@ class OpenCvHandler:
         else:
             self.instance.refresh = True
         self.instance.new_frame = new_frame
+
+    def send_scnd_new_frame(self, new_frame):
+        if self.instance.refresh_scnd:
+            print('A frame was dropped!')
+        else:
+            self.instance.refresh_scnd = True
+        self.instance.scnd_new_frame = new_frame
 
     def display_bgr_color(self, bgr_col):
         """Displays the given color on the whole screen"""
