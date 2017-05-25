@@ -95,8 +95,7 @@ class State_Machine(object):
         to_sleep = math.floor(curr_time + 1.0) - curr_time
         logging.info(curr_time)
         time.sleep(to_sleep)
-        self.clock_start = time.time()
-        logging.info("Clock start is at: " + str(self.clock_start))
+
 
     def sleep_until_next_tick(self):
         self.tick_count = self.tick_count + 1
@@ -105,9 +104,9 @@ class State_Machine(object):
         current_time = time.time()
         sleep_amount = (self.tick_count * State_Machine.TRANSMISSION_RATE + self.clock_start) - current_time
 
-        if self.log_count > 0:
+        if self.log_count > State_Machine.TRANSMISSION_RATE:
             self.log_count = 0
-            logging.info("Going to sleep for : " + str(sleep_amount) + " seconds. Time is " + str(current_time))
+            logging.info("Going to sleep for : " + str(sleep_amount) + " seconds. Time is: " + str(current_time))
 
         if sleep_amount < 0:
             logging.warning("Skipping sleep time !")
