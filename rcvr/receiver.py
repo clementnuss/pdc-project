@@ -67,7 +67,7 @@ class Receiver(State_Machine):
         
         :return: 
         """
-        self.cv_handler.display_hsv_color(S_VOID)
+        self.cv_handler.display_hsv_color(S_NO_ACK)
         State_Machine.compute_screen_boundaries(self, ONE_RANGE_NIGHT)
         self.cap.set_screen_boundaries(self.screen_boundaries)
 
@@ -88,6 +88,10 @@ class Receiver(State_Machine):
         """
 
         void_score, ack_score = State_Machine.get_symbols_scores(self, self.VOID_REF, self.ACK_REF)
+
+        # Due to polling of camera, none means we do no yet have access to cropped frame
+        if void_score is None or ack_score is None:
+            return
 
         # Transmitter screen has blacked out
         if void_score < ack_score:
@@ -110,8 +114,8 @@ class Receiver(State_Machine):
 
         for i in range(0, 8):
             ret, frame = self.cap.readHSVFrame()
-            masked_frame = frame * self.screen_mask
-            self.cv_handler.display_hsv_frame(superimpose(self.VOID_MASK, masked_frame[::10, ::10]))
+
+            self.cv_handler.display_hsv_frame(superimpose(self.VOID_REF, frame))
 
             zero_score, one_score = State_Machine.get_symbols_scores(self, self.SYMBOL_ZERO_REF, self.SYMBOL_ONE_REF)
 

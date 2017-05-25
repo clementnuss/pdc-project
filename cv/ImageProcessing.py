@@ -12,6 +12,8 @@ def getMask(frame, color_range):
 
 
 def compute_score(masked_frame, color_ref):
+    if not masked_frame.shape == color_ref.shape:
+        return None
     # Convert to full size integers to perform substraction
     diff = np.int32(masked_frame) - np.int32(color_ref)
     diff = diff * diff
