@@ -9,7 +9,7 @@ from utils.Symbols import *
 class State(Enum):
     IDLE = 'Idle'
     SCREEN_DETECTION = 'Screen detection'
-    SCREEN_STAND_BY = 'Stand by'
+    STAND_BY = 'Stand by'
     SYNC_CLOCK = 'Sync clock'
     FIND_SCREEN = 'Find screen'
     RECEIVE = 'Receive'
@@ -42,7 +42,7 @@ class Receiver(State_Machine):
             if self.state == State.IDLE:
                 self.do_idle()
             elif self.state == State.SCREEN_DETECTION:
-                self.do_show_screen()
+                self.do_find_screen()
             elif self.state == State.STAND_BY:
                 self.do_find_screen()
             elif self.state == State.SYNC_CLOCK:

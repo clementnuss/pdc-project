@@ -51,7 +51,7 @@ class Transmitter(State_Machine):
                 self.do_receive()
             elif self.state == State.WAIT_FOR_ACK:
                 logging.info("Transmitter branched in wait for ack mode")
-                self.do_wait_for_ack()
+                self.do_get_ack()
             else:
                 raise NotImplementedError('Undefined snd state')
 
@@ -85,26 +85,30 @@ class Transmitter(State_Machine):
                 :return: 
                 """
 
-        State_Machine._align_clock(self)
         self.receiver_ack = False
 
         while not self.receiver_ack:
 
+            State_Machine._align_clock(self)
             ack_score, no_ack_score = State_Machine.get_ack_scores(self)
 
             logging.info("Ack score: " + str(ack_score) + " No ack score: " + str(no_ack_score))
 
             if (ack_score < no_ack_score):
-                logging.info("Got ACK ")
+                curr_time = time.time()
+                self.clock_start = np.fix(curr_time + 1.1)
+                logging.info(
+                    "Got ACK. Blacking out screen. Current time is: " + str(curr_time) + " Clock start is: " + str(
+                        self.clock_start))
                 self.receiver_ack = True
 
                 # Screen goes black, meaning that at next epoch second, receiver clock fires up and get in sync
                 self.cv_handler.display_hsv_color(S_VOID)
                 self.state = State.SEND
+                State_Machine.sleep_until_next_tick(self)
             else:
                 logging.info("NO ACK")
 
-            State_Machine.sleep_until_next_tick(self)
 
     def do_send(self):
         byte_to_send = None
@@ -136,19 +140,22 @@ class Transmitter(State_Machine):
 
             if bit_to_send:
                 self.cv_handler.display_hsv_color(S_ONE)
-                logging.info(1)
+                logging.info(str(1) + " at time " + str(time.time()))
                 State_Machine.sleep_until_next_tick(self)
             else:
                 self.cv_handler.display_hsv_color(S_ZERO)
-                logging.info(0)
+                logging.info(str(0) + " at time " + str(time.time()))
                 State_Machine.sleep_until_next_tick(self)
 
     def do_receive(self):
         pass
 
-    def do_wait_for_ack(self):
+    def do_get_ack(self):
 
         self.cv_handler.display_hsv_color(S_VOID)
+
+        # wait one tick for receiver ack
+        State_Machine.sleep_until_next_tick(self)
 
         ack_score, no_ack_score = State_Machine.get_ack_scores(self)
 
