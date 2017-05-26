@@ -150,9 +150,7 @@ class State_Machine(object):
 
                 if most_beautiful_contour is not None:
                     # cv2.drawContours(frame, [most_beautiful_contour], -1, (255, 255, 255), thickness=2)
-
-                    3
-                    self.cv_handler.display_hsv_frame(frame)
+                    # self.cv_handler.display_hsv_frame(frame)
 
                     # Extract interesting portion of image
                     newmin_x = np.min(most_beautiful_contour[:, 0, 0])
