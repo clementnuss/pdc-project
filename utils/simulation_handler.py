@@ -22,7 +22,7 @@ def simulate_camera(frame):
         logging.error("Received a frame with only one dimension "
                       "(probably a binary image, used for debugging), so won't display it")
         return camera_frame
-    camera_frame[100:100 + scaled_frame.shape[0], 100:100 + scaled_frame.shape[1]] = scaled_frame
+    camera_frame[80:80 + scaled_frame.shape[0], 5:5 + scaled_frame.shape[1]] = scaled_frame
     return camera_frame
 
 
@@ -64,8 +64,8 @@ class SimulationHandler:
             self.frame = simulate_camera(
                 np.full((CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH, 3), (0, 0, 14), dtype=np.uint8))
 
-            self.screen_boundaries = (0, CV_Video_Capture_Handler.CV_Video_Capture_Handler.HEIGHT,
-                                      0, CV_Video_Capture_Handler.CV_Video_Capture_Handler.WIDTH)
+            self.screen_boundaries = (0, CV_Video_Capture_Handler.CV_Video_Capture_Handler.WIDTH,
+                                      0, CV_Video_Capture_Handler.CV_Video_Capture_Handler.HEIGHT)
 
         def send_new_frame(self, new_frame):
             self.frame = simulate_camera(new_frame)
@@ -89,7 +89,7 @@ class SimulationHandler:
         def readHSVFrame(self):
             ret, frame = True, SimulationHandler.instance.rcvr.frame
             cropped_frame = crop(simulate_camera(frame), self.screen_boundaries)
-            return ret, cropped_frame
+            return ret, cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2HSV)
 
         def set_screen_boundaries(self, bounds):
             self.screen_boundaries = bounds
@@ -138,7 +138,7 @@ class SimulationHandler:
         def readHSVFrame(self):
             ret, frame = True, SimulationHandler.instance.tmtr.frame
             cropped_frame = crop(simulate_camera(frame), self.screen_boundaries)
-            return ret, cropped_frame
+            return ret, cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2HSV)
 
         def set_screen_boundaries(self, bounds):
             self.screen_boundaries = bounds

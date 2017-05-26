@@ -30,7 +30,7 @@ class CV_Video_Capture_Handler:
             self.height = self.videocapture.get(cv2.CAP_PROP_FRAME_HEIGHT)
             self.fps = self.videocapture.get(cv2.CAP_PROP_FPS)
             self.polled_frame = None
-            self.screen_boundaries = (0, CV_Video_Capture_Handler.HEIGHT, 0, CV_Video_Capture_Handler.WIDTH)
+            self.screen_boundaries = (0, CV_Video_Capture_Handler.WIDTH, 0, CV_Video_Capture_Handler.HEIGHT)
             self.process = threading.Thread(target=self._frame_continuous_poll)
             self.process.setDaemon(True)
             self.process.start()

@@ -2,15 +2,15 @@ from utils.Constants import WIDTH, HEIGHT
 from utils.HSVBounds import *
 
 S_VOID = np.array([[[np.uint8(0), np.uint8(0), np.uint8(0)]]])
-S_ZERO = np.array([[[np.uint8(15), np.uint8(255), np.uint8(255)]]])
-S_ONE = np.array([[[np.uint8(105), np.uint8(255), np.uint8(255)]]])
+S_NO_ACK = np.array([[[np.uint8(15), np.uint8(255), np.uint8(255)]]])
+S_ACK = np.array([[[np.uint8(105), np.uint8(255), np.uint8(255)]]])
 
-S_SYNC = S_ZERO
+# Deprecated variables
+S_ZERO = S_NO_ACK
+S_ONE = S_ACK
 
-S_ACK = S_ONE
-S_NO_ACK = S_ZERO
+S_SYNC = S_ACK
 
-SYMBOL_ONE_REF = np.full((HEIGHT, WIDTH, 3), fill_value=S_ONE, dtype=np.uint8)
 SYMBOL_ACK_REF = np.full((HEIGHT, WIDTH, 3), fill_value=S_ACK, dtype=np.uint8)
 SYMBOL_ZERO_REF = np.full((HEIGHT, WIDTH, 3), fill_value=S_ZERO, dtype=np.uint8)
 SYMBOL_NO_ACK_REF = np.full((HEIGHT, WIDTH, 3), fill_value=S_NO_ACK, dtype=np.uint8)

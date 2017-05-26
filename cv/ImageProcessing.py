@@ -28,6 +28,9 @@ def superimpose(big_frame, small_frame):
 
 
 def crop(frame, boundaries):
+    """boundaries = [left column, right column, top row, bottom row]
+    the default boundaries should then be [0, WIDTH, 0, HEIGHT]
+    """
     return frame[boundaries[2]:boundaries[3] + 1, boundaries[0]:boundaries[1] + 1, :]
 
 if __name__ == '__main__':

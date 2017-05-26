@@ -100,7 +100,7 @@ class Transmitter(State_Machine):
 
             logging.info("Ack score: " + str(ack_score) + " No ack score: " + str(no_ack_score))
 
-            if (ack_score < no_ack_score):
+            if ack_score < no_ack_score:
                 curr_time = time.time()
                 self.clock_start = np.fix(curr_time + 1.1)
                 logging.info(
@@ -112,6 +112,7 @@ class Transmitter(State_Machine):
                 self.cv_handler.display_hsv_color(S_VOID)
                 self.state = State.SEND
                 State_Machine.sleep_until_next_tick(self)
+                logging.info("Transmitter finished the synchronization phase")
             else:
                 logging.info("NO ACK")
 

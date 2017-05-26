@@ -107,6 +107,7 @@ class Receiver(State_Machine):
             self.state = State.RECEIVE
             self.cv_handler.display_hsv_color(S_VOID)
             logging.info("Clock start is: "+ str(self.clock_start) +" Time is " + str(current_time))
+            logging.info("Receiver finished the synchronization phase")
             State_Machine.sleep_until_next_tick(self)
 
     def do_receive(self):
