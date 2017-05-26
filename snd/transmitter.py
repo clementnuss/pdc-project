@@ -12,6 +12,7 @@ class State(Enum):
     SCREEN_DETECTION = 'Screen detection'
     STAND_BY = 'Stand by'
     SYNC_CLOCK = 'Sync clock'
+    CALIBRATE = 'Calibrate colors'
     SEND = 'Send'
     RECEIVE = 'Receive'
     WAIT_FOR_ACK = 'Wait'
@@ -44,6 +45,8 @@ class Transmitter(State_Machine):
                 self.do_find_screen()
             elif self.state == State.SYNC_CLOCK:
                 self.do_sync()
+            elif self.state == State.CALIBRATE:
+                self.do_calibrate()
             elif self.state == State.SEND:
                 if len(self.byte_sequence) > 0:
                     self.do_send()
@@ -102,7 +105,7 @@ class Transmitter(State_Machine):
 
             if ack_score < no_ack_score:
                 curr_time = time.time()
-                self.clock_start = np.fix(curr_time + 1.1)
+                self.clock_start = curr_time
                 logging.info(
                     "Got ACK. Blacking out screen. Current time is: " + str(curr_time) + " Clock start is: " + str(
                         self.clock_start))
@@ -110,12 +113,11 @@ class Transmitter(State_Machine):
 
                 # Screen goes black, meaning that at next epoch second, receiver clock fires up and get in sync
                 self.cv_handler.display_hsv_color(S_VOID)
-                self.state = State.SEND
+                self.state = State.CALIBRATE
                 State_Machine.sleep_until_next_tick(self)
                 logging.info("Transmitter finished the synchronization phase")
             else:
                 logging.info("NO ACK")
-
 
     def do_send(self):
         byte_to_send = None
@@ -150,6 +152,15 @@ class Transmitter(State_Machine):
             logging.info(str(symbol_index) + " at time " + str(time.time()))
             State_Machine.sleep_until_next_tick(self)
 
+    def do_calibrate(self):
+
+        for i in range(0, NUM_SYMBOLS):
+            for x in range(0, 3):
+                self.cv_handler.display_hsv_color(SYMBOLS[i])
+                State_Machine.sleep_until_next_tick(self)
+
+        self.state = State.SEND
+
     def do_receive(self):
         pass
 
@@ -176,7 +187,6 @@ class Transmitter(State_Machine):
         # If ack transmit next byte
         self.state = State.SEND
         State_Machine.sleep_until_next_tick(self)
-
 
     def _load_file(self, file_name):
 

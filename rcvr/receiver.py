@@ -13,6 +13,7 @@ class State(Enum):
     SCREEN_DETECTION = 'Screen detection'
     STAND_BY = 'Stand by'
     SYNC_CLOCK = 'Sync clock'
+    CALIBRATE = 'Calibrate colors'
     FIND_SCREEN = 'Find screen'
     RECEIVE = 'Receive'
     CHECK = 'Check'
@@ -53,6 +54,8 @@ class Receiver(State_Machine):
                 self.do_find_screen()
             elif self.state == State.SYNC_CLOCK:
                 self.do_sync()
+            elif self.state == State.CALIBRATE:
+                self.do_calibrate()
             elif self.state == State.RECEIVE:
                 self.do_receive()
             elif self.state == State.CHECK:
@@ -94,22 +97,39 @@ class Receiver(State_Machine):
         :return: 
         """
 
-        void_score, ack_score = State_Machine.get_symbols_scores(self, self.VOID_REF, self.ACK_REF)
+        # void_score, ack_score = State_Machine.get_symbols_scores(self, self.VOID_REF, self.ACK_REF)
 
         # Due to polling of camera, none means we do no yet have access to cropped frame
-        if void_score is None or ack_score is None:
-            return
 
         # Transmitter screen has blacked out
-        if void_score < ack_score:
+        value_mean = self.get_value_mean()
+        logging.info("value mean: " + str(value_mean))
+        if value_mean < 125:
             current_time = time.time()
-            self.clock_start = np.fix(current_time + 1) + State_Machine.SAMPLING_OFFSET
+            self.clock_start = current_time + State_Machine.SAMPLING_OFFSET
 
-            self.state = State.RECEIVE
+            self.state = State.CALIBRATE
             self.cv_handler.display_hsv_color(S_VOID)
             logging.info("Clock start is: " + str(self.clock_start) + " Time is " + str(current_time))
             logging.info("Receiver finished the synchronization phase")
             State_Machine.sleep_until_next_tick(self)
+
+    def do_calibrate(self):
+
+        for i in range(0, NUM_SYMBOLS):
+            hue_mean = 0.0
+
+            for x in range(0,3):
+
+                hue_mean += State_Machine.get_hue_mean(self)
+
+                State_Machine.sleep_until_next_tick(self)
+
+            hue_mean = np.round(hue_mean / 3.0)
+            logging.info("hue mean : " + str(hue_mean))
+            SYMBOLS[i, 0, 0, 0] = np.round(hue_mean)
+
+        self.state = State.RECEIVE
 
     def do_receive(self):
 
@@ -121,9 +141,8 @@ class Receiver(State_Machine):
         self.decoded_byte = 0
 
         for i in range(0, 4):
-
-            #ret, frame = self.cap.readHSVFrame()
-            #self.cv_handler.display_hsv_frame(superimpose(self.VOID_REF, frame))
+            # ret, frame = self.cap.readHSVFrame()
+            # self.cv_handler.display_hsv_frame(superimpose(self.VOID_REF, frame))
 
             # zero_score, one_score = State_Machine.get_symbols_scores(self, self.SYMBOL_ZERO_REF, self.SYMBOL_ONE_REF)
             hue_mean = State_Machine.get_hue_mean(self)

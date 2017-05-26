@@ -152,6 +152,8 @@ class SimulationHandler:
 
 
 def main():
+    Constants.SIMULATE = True
+
     simulation_handler = SimulationHandler()
     Constants.SIMULATION_HANDLER = simulation_handler
 

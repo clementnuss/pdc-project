@@ -10,8 +10,8 @@ from utils.Symbols import *
 
 
 class State_Machine(object):
-    TRANSMISSION_RATE = 1.0 / 1.0
-    SAMPLING_OFFSET = TRANSMISSION_RATE / 2.0
+    TRANSMISSION_RATE = 1.0 / 10.0
+    SAMPLING_OFFSET = TRANSMISSION_RATE / 2.0 - TRANSMISSION_RATE / 60
     CONVERGENCE_BOUND_THRESHOLD = 15
     CONVERGENCE_THRESHOLD = 10000
     BLACK_THRESHOLD = 200000
@@ -104,7 +104,7 @@ class State_Machine(object):
                 for cnt in contours:
                     area = cv2.contourArea(cnt, oriented=False)
                     print(area)
-                    if 10000 > area > 20 and cv2.isContourConvex(cnt):
+                    if 30000 > area > 20 and cv2.isContourConvex(cnt):
                         if area > max_area:
                             max_area = area
                             most_beautiful_contour = cnt
@@ -136,8 +136,8 @@ class State_Machine(object):
                 max_y = newmax_y
 
                 # cv2.rectangle(frame, (min_x, min_y), (max_x, max_y), (0, 255, 0), thickness=5)
-                self.cv_handler.display_hsv_frame(
-                    superimpose(SYMBOL_NO_ACK_REF, crop(frame, (min_x, max_x, min_y, max_y))))
+                #self.cv_handler.display_hsv_frame(
+                 #   superimpose(SYMBOL_NO_ACK_REF, crop(frame, (min_x, max_x, min_y, max_y))))
 
         self.screen_boundaries = (min_x, max_x, min_y, max_y)
         State_Machine._compute_references_values(self)
