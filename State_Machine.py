@@ -198,10 +198,10 @@ class State_Machine(object):
         return ack_score, no_ack_score
 
     def get_ack_scores(self):
-        ret, frame = self.cap.readHSVFrame()
+        hue_mean = self.get_hue_mean()
 
-        ack_score = compute_score(frame, self.ACK_REF)
-        no_ack_score = compute_score(frame, self.NO_ACK_REF)
+        ack_score = compute_cyclic_score(hue_mean, S_ACK[0, 0, 0])
+        no_ack_score = compute_cyclic_score(hue_mean, S_NO_ACK[0, 0, 0])
 
         return ack_score, no_ack_score
 

@@ -9,7 +9,7 @@ def smooth_step(x, edge0, edge1):
     return t * t * (3.0 - 2.0 * t);
 
 
-def getMask(frame, color_range):
+def getMask_with_hsvrange(frame, color_range):
     processed_frame = cv2.inRange(frame, color_range.min_bounds(), color_range.max_bounds())
     # Erode and dilate the image to remove noise from the HSV filtering
     kernel = np.ones((ERODE_KERNEL_SIZE, ERODE_KERNEL_SIZE), np.uint8)
@@ -60,9 +60,5 @@ def crop(frame, boundaries):
     return frame[boundaries[2]:boundaries[3] + 1, boundaries[0]:boundaries[1] + 1, :]
 
 if __name__ == '__main__':
-    a1 = np.full((4, 4, 3), fill_value=255, dtype=np.uint8)
-    a2 = np.zeros((2, 2, 1), dtype=np.uint8)
-
-    a1[0:2, 0:2, :] = a2
-
+    print(2 % 180)
     print(compute_cyclic_score(np.uint8(170), np.uint8(0)))

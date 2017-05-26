@@ -38,8 +38,8 @@ class Receiver(State_Machine):
         self.bitCount = 0
         self.screen_mask = None
 
-        if Constants.SIMULATE:
-            simulation_handler = Constants.SIMULATION_HANDLER
+        if SIMULATE:
+            simulation_handler = SIMULATION_HANDLER
             self.cv_handler = simulation_handler.rcvr
             self.cap = simulation_handler.rcvr
 
@@ -77,7 +77,7 @@ class Receiver(State_Machine):
         :return: 
         """
         self.cv_handler.display_hsv_color(S_NO_ACK)
-        State_Machine.compute_screen_boundaries(self, ONE_RANGE)
+        State_Machine.compute_screen_boundaries(self, S_ACK[0, 0, 0])
         self.cap.set_screen_boundaries(self.screen_boundaries)
 
         self.cv_handler.display_hsv_color(S_ACK)
@@ -104,7 +104,7 @@ class Receiver(State_Machine):
         # Transmitter screen has blacked out
         value_mean = self.get_value_mean()
         logging.info("value mean: " + str(value_mean))
-        if value_mean < 125:
+        if value_mean < 80:
             current_time = time.time()
             self.clock_start = current_time + State_Machine.SAMPLING_OFFSET
 
