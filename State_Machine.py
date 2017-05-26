@@ -1,6 +1,7 @@
 import logging
 import math
 import time
+from typing import Tuple
 
 import cv.CV_GUI_Handler
 import cv.CV_Video_Capture_Handler
@@ -200,14 +201,19 @@ class State_Machine(object):
         ret, frame = self.cap.readHSVFrame()
         return frame[:, :, i].mean()
 
+    def compute_adjusted_hue_mean(self, target_hue, frame) -> Tuple[np.float, np.float]:
+        delta = 90 - target_hue
+        frame_adjusted = (frame[:,:,0] + delta) % 180
+        return (delta, frame_adjusted.mean())
+
     def compute_hue_mean(self, frame) -> np.float64:
-        return self._compute_mean(self,frame, 0)
+        return self._compute_mean(frame, 0)
 
     def compute_saturation_mean(self, frame) -> np.float64:
-        return self._compute_mean(self,frame, 1)
+        return self._compute_mean(frame, 1)
 
     def compute_value_mean(self, frame) -> np.float64:
-        return self._compute_mean(self,frame, 2)
+        return self._compute_mean(frame, 2)
 
     def _compute_mean(self, frame,  i):
         return frame[:, :, i].mean()

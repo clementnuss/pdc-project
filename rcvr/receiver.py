@@ -122,11 +122,11 @@ class Receiver(State_Machine):
             for x in range(0,3):
 
                 hue_mean += State_Machine.get_hue_mean(self)
-
+                logging.info("hue mean : " + str(hue_mean))
                 State_Machine.sleep_until_next_tick(self)
 
             hue_mean = np.round(hue_mean / 3.0)
-            logging.info("hue mean : " + str(hue_mean))
+            logging.info("symbol " + str(i) + ", mean : " + str(hue_mean))
             SYMBOLS[i, 0, 0, 0] = np.round(hue_mean)
 
         for i in range(0, NUM_SYMBOLS):
@@ -148,10 +148,15 @@ class Receiver(State_Machine):
             # self.cv_handler.display_hsv_frame(superimpose(self.VOID_REF, frame))
 
             # zero_score, one_score = State_Machine.get_symbols_scores(self, self.SYMBOL_ZERO_REF, self.SYMBOL_ONE_REF)
-            hue_mean = State_Machine.get_hue_mean(self)
+            ret, frame = self.cap.readHSVFrame()
+            hue_mean = State_Machine.compute_hue_mean(self, frame)
+            #adjusted_hue_mean will always be 90.0, as the purpose of this operation is to center all hue values around
+            # initially computed hue_mean
+            delta, adjusted_hue_mean = State_Machine.compute_adjusted_hue_mean(self, hue_mean, frame)
+
             logging.info("hue mean : " + str(hue_mean))
 
-            detected_symbol = (np.abs(SYMBOLS[:, 0, 0, 0] - hue_mean)).argmin()
+            detected_symbol = (np.abs((SYMBOLS[:, 0, 0, 0] + delta) % 180 - hue_mean)).argmin()
             logging.info("detected symbol: " + str(detected_symbol))
 
             self.decoded_byte = (detected_symbol << NUM_BITS * i) | self.decoded_byte
