@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 
 import cv.CV_Video_Capture_Handler
+from utils.Constants import *
 
 TRACKBAR_WINDOW = 'trackbars'
 
@@ -91,6 +92,7 @@ def main_contour():
 
         min_hsv = np.array(get_min_hsv(), np.uint8)
         max_hsv = np.array(get_max_hsv(), np.uint8)
+
         frame_thresholded = cv2.inRange(frame, min_hsv, max_hsv)
 
         # We erode and dilate the image to remove noise from the HSV filtering More info here:
@@ -107,10 +109,10 @@ def main_contour():
 
         contours = [cv2.approxPolyDP(cnt, 3, True) for cnt in contours0]
 
-        print("Got " + str(len(contours)) + " contours")
 
         if len(contours) < 20 and len(contours) > 0:
 
+            print("Got " + str(len(contours)) + " contours")
             # Filter contours
 
             most_beautiful_contour = None
@@ -118,27 +120,41 @@ def main_contour():
 
             for cnt in contours:
                 area = cv2.contourArea(cnt, oriented=False)
+
+                cntmin_x = np.min(cnt[:, 0, 0])
+                cntmax_x = np.max(cnt[:, 0, 0])
+                cntmin_y = np.min(cnt[:, 0, 1])
+                cntmax_y = np.max(cnt[:, 0, 1])
+
+                if (cntmin_x < WIDTH / DETECTION_PROPORTION or
+                            cntmin_y < HEIGHT / DETECTION_PROPORTION or
+                            cntmax_x > (WIDTH - WIDTH / DETECTION_PROPORTION) or
+                            cntmax_y > (HEIGHT - HEIGHT / DETECTION_PROPORTION)):
+                    print("Skipping contour, out of bounds")
+                    continue
+
                 print(area)
-                if area > 20 and cv2.isContourConvex(cnt):
+
+                if 30000 > area > 50 and cv2.isContourConvex(cnt):
                     if area > max_area:
                         max_area = area
                         most_beautiful_contour = cnt
 
-            if most_beautiful_contour is None:
-                continue
+            if most_beautiful_contour is not None:
+                cv2.drawContours(frame, [most_beautiful_contour], -1, (255, 255, 255), thickness=2)
 
-            cv2.drawContours(frame, [most_beautiful_contour], -1, (255, 255, 255), thickness=2)
+                cv2.imshow('contoured frame', frame)
 
-            cv2.imshow('contoured frame', frame)
+                # Extract interesting portion of image
+                min_x = np.min(most_beautiful_contour[:, 0, 0])
+                max_x = np.max(most_beautiful_contour[:, 0, 0])
+                min_y = np.min(most_beautiful_contour[:, 0, 1])
+                max_y = np.max(most_beautiful_contour[:, 0, 1])
 
-            # Extract interesting portion of image
-            min_x = np.min(most_beautiful_contour[:, 0, 0])
-            max_x = np.max(most_beautiful_contour[:, 0, 0])
-            min_y = np.min(most_beautiful_contour[:, 0, 1])
-            max_y = np.max(most_beautiful_contour[:, 0, 1])
+                cv2.rectangle(frame, (min_x, min_y), (max_x, max_y), (0, 255, 0), thickness=5)
+                cv2.imshow('bounded frame', frame)
 
-            cv2.rectangle(frame, (min_x, min_y), (max_x, max_y), (0, 255, 0), thickness=5)
-            cv2.imshow('bounded frame', frame)
+
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break

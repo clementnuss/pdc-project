@@ -5,7 +5,7 @@ import time
 import cv.CV_GUI_Handler
 import cv.CV_Video_Capture_Handler
 from cv.ImageProcessing import *
-from utils import Constants
+from utils.Constants import *
 from utils.Symbols import *
 
 
@@ -80,7 +80,7 @@ class State_Machine(object):
         min_x = min_y = max_x = max_y = 0
 
         while not converged:
-            time.sleep(0.2)
+            time.sleep(0.5)
             ret, frame = self.cap.readHSVFrame()
 
             frame_thresholded = getMask(frame, color_range)
@@ -128,7 +128,11 @@ class State_Machine(object):
                 d4 = abs(newmax_y - max_y)
 
                 if [d1, d2, d3, d4] < [State_Machine.CONVERGENCE_BOUND_THRESHOLD] * 4:
-                    converged = True
+                    if (newmin_x > WIDTH / DETECTION_PROPORTION and
+                                newmin_y > HEIGHT / DETECTION_PROPORTION and
+                                newmax_x < (WIDTH - WIDTH / DETECTION_PROPORTION) and
+                                newmax_y < (HEIGHT - HEIGHT / DETECTION_PROPORTION)):
+                        converged = True
 
                 min_x = newmin_x + 1
                 max_x = newmax_x
