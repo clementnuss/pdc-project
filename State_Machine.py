@@ -35,14 +35,9 @@ class State_Machine(object):
             self.ACK_REF = None
             self.NO_ACK_REF = None
             self.VOID_REF = None
-            
-        if Constants.SIMULATE:
-            simulation_handler = Constants.SIMULATION_HANDLER
-            self.cv_handler = simulation_handler.tmtr
-            self.cap = simulation_handler.tmtr
-        else:
-            self.cv_handler = cv.CV_GUI_Handler.OpenCvHandler()
-            self.cap = cv.CV_Video_Capture_Handler.CV_Video_Capture_Handler()
+
+        self.cv_handler = cv.CV_GUI_Handler.OpenCvHandler()
+        self.cap = cv.CV_Video_Capture_Handler.CV_Video_Capture_Handler()
 
     def compute_screen_mask(self, color_range):
         converged = False

@@ -26,6 +26,11 @@ class Transmitter(State_Machine):
         self.last_byte_sent = None
         self.receiver_ack = True
 
+        if Constants.SIMULATE:
+            simulation_handler = Constants.SIMULATION_HANDLER
+            self.cv_handler = simulation_handler.tmtr
+            self.cap = simulation_handler.tmtr
+
         logging.info('Initialized snd at state ' + str(self.state))
 
         self._load_file(file_name)
@@ -71,6 +76,7 @@ class Transmitter(State_Machine):
 
         self.cv_handler.display_hsv_color(S_ACK)
         self.state = State.SYNC_CLOCK
+        logging.info("Transmitter finished the Screen detection phase")
         return
 
     def do_sync(self):

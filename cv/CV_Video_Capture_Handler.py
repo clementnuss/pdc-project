@@ -49,7 +49,7 @@ class CV_Video_Capture_Handler:
             bounds = self.screen_boundaries
             self.video_lock.release()
 
-            cropped_frame = crop(frame, self.screen_boundaries)
+            cropped_frame = crop(frame, bounds)
             cropped_frame = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2HSV)
 
             self.video_lock.acquire()
@@ -70,8 +70,8 @@ class CV_Video_Capture_Handler:
         self.video_lock.release()
 
     def readHSVFrame(self):
-        frame = self._get_polled_frame()
-        return True, frame
-
-    def readFrame(self):
         return True, self._get_polled_frame()
+
+#   Commented, because we only have HSV frame now
+#   def readFrame(self):
+#        return True, self._get_polled_frame()

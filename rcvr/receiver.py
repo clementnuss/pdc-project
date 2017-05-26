@@ -36,6 +36,11 @@ class Receiver(State_Machine):
         self.bitCount = 0
         self.screen_mask = None
 
+        if Constants.SIMULATE:
+            simulation_handler = Constants.SIMULATION_HANDLER
+            self.cv_handler = simulation_handler.rcvr
+            self.cap = simulation_handler.rcvr
+
         print('Initialized rcvr at state ' + str(self.state))
         time.sleep(1)
 
@@ -73,6 +78,7 @@ class Receiver(State_Machine):
 
         self.cv_handler.display_hsv_color(S_ACK)
         self.state = State.SYNC_CLOCK
+        logging.info("Receiver finished the Screen detection phase")
         return
 
     def do_sync(self):

@@ -44,6 +44,7 @@ def displayFrame(frame):
     cv2.imshow("OpenCV", frame)
     cv2.waitKey(1)
 
+
 def get_min_hsv():
     return [get_trackbar_value('H_min'), get_trackbar_value('S_min'), get_trackbar_value('V_min')]
 
@@ -161,6 +162,7 @@ def pass_through():
 
         cv_handler.send_new_frame(frame)
 
+
 if __name__ == '__main__':
     time.sleep(0.5)
     # pass_through()
@@ -170,4 +172,4 @@ if __name__ == '__main__':
     # When everything done, release the capture
     input("Press Enter")
     # cap.release()
-    #cv2.destroyAllWindows()
+    # cv2.destroyAllWindows()

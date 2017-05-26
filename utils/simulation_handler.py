@@ -4,9 +4,11 @@ from time import sleep
 import cv2
 import logging
 import numpy as np
+import scipy.misc as scm
 
-from cv import CV_GUI_Handler
+from cv import CV_GUI_Handler, CV_Video_Capture_Handler
 from cv.CV_GUI_Handler import OpenCvHandler
+from cv.ImageProcessing import crop
 from rcvr import receiver
 from snd import transmitter
 from utils import Constants
@@ -60,7 +62,10 @@ class SimulationHandler:
             if not SimulationHandler.TmtrSide.tmtrInst:
                 SimulationHandler.TmtrSide.tmtrInst = SimulationHandler.TmtrSide.__TmtrSide()
             self.frame = simulate_camera(
-                np.full((CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH, 3), (108, 141, 194), dtype=np.uint8))
+                np.full((CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH, 3), (0, 0, 14), dtype=np.uint8))
+
+            self.screen_boundaries = (0, CV_Video_Capture_Handler.CV_Video_Capture_Handler.HEIGHT,
+                                      0, CV_Video_Capture_Handler.CV_Video_Capture_Handler.WIDTH)
 
         def send_new_frame(self, new_frame):
             self.frame = simulate_camera(new_frame)
@@ -76,13 +81,18 @@ class SimulationHandler:
             color_frame = np.full((CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH, 3), converted_color, dtype=np.uint8)
             self.send_new_frame(color_frame)
 
+        def display_hsv_frame(self, hsvframe):
+            resized_frame = scm.imresize(hsvframe, (Constants.WIDTH, Constants.HEIGHT), interp='bilinear')
+            resized_frame = cv2.cvtColor(resized_frame, cv2.COLOR_HSV2BGR)
+            self.send_new_frame(resized_frame)
+
         def readHSVFrame(self):
             ret, frame = True, SimulationHandler.instance.rcvr.frame
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            return ret, frame
+            cropped_frame = crop(simulate_camera(frame), self.screen_boundaries)
+            return ret, cropped_frame
 
-        def readFrame(self):
-            return True, SimulationHandler.instance.rcvr.frame
+        def set_screen_boundaries(self, bounds):
+            self.screen_boundaries = bounds
 
         def __getattr__(self, item):
             return getattr(self.tmtrInst, item)
@@ -101,7 +111,10 @@ class SimulationHandler:
             if not SimulationHandler.RcvrSide.rcvrInst:
                 SimulationHandler.RcvrSide.rcvrInst = SimulationHandler.RcvrSide.__ReceiverSide()
             self.frame = simulate_camera(
-                np.full((CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH, 3), (108, 141, 194), dtype=np.uint8))
+                np.full((CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH, 3), (0, 0, 14), dtype=np.uint8))
+
+            self.screen_boundaries = (0, CV_Video_Capture_Handler.CV_Video_Capture_Handler.HEIGHT,
+                                      0, CV_Video_Capture_Handler.CV_Video_Capture_Handler.WIDTH)
 
         def send_new_frame(self, new_frame):
             self.frame = simulate_camera(new_frame)
@@ -117,13 +130,18 @@ class SimulationHandler:
             color_frame = np.full((CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH, 3), converted_color, dtype=np.uint8)
             self.send_new_frame(color_frame)
 
+        def display_hsv_frame(self, hsvframe):
+            resized_frame = scm.imresize(hsvframe, (Constants.WIDTH, Constants.HEIGHT), interp='bilinear')
+            resized_frame = cv2.cvtColor(resized_frame, cv2.COLOR_HSV2BGR)
+            self.send_new_frame(resized_frame)
+
         def readHSVFrame(self):
             ret, frame = True, SimulationHandler.instance.tmtr.frame
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            return ret, frame
+            cropped_frame = crop(simulate_camera(frame), self.screen_boundaries)
+            return ret, cropped_frame
 
-        def readFrame(self):
-            return True, SimulationHandler.instance.TmtrSide.frame
+        def set_screen_boundaries(self, bounds):
+            self.screen_boundaries = bounds
 
         def __getattr__(self, item):
             return getattr(self.rcvrInst, item)
@@ -148,7 +166,7 @@ def main():
     tmtr_thread.start()
 
     while True:
-        #main window shows what the transmitter is displaying, secondary shows what the receiver is displaying
+        # main window shows what the transmitter is displaying, secondary shows what the receiver is displaying
         cv_handler.send_new_frame(simulation_handler.tmtr.frame)
         cv_handler.send_scnd_new_frame(simulation_handler.rcvr.frame)
         sleep(0.1)
