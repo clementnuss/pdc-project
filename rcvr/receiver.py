@@ -129,6 +129,9 @@ class Receiver(State_Machine):
             logging.info("hue mean : " + str(hue_mean))
             SYMBOLS[i, 0, 0, 0] = np.round(hue_mean)
 
+        for i in range(0, NUM_SYMBOLS):
+            logging.info("symbol " + str(i) + " : " + str(SYMBOLS[i]))
+
         self.state = State.RECEIVE
 
     def do_receive(self):
@@ -176,6 +179,14 @@ class Receiver(State_Machine):
         State_Machine.sleep_until_next_tick(self)
         self.cv_handler.display_hsv_color(S_VOID)
         self.state = State.RECEIVE
+
+        if len(self.decoded_sequence) % 10 == 0:
+            str = ""
+            for b in self.decoded_sequence:
+                str += chr(b)
+
+            logging.info("So far, received: " + str)
+
         State_Machine.sleep_until_next_tick(self)
 
     def _compute_checksum(self):
