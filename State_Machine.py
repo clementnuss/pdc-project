@@ -187,29 +187,29 @@ class State_Machine(object):
         return first_score, second_score
 
     def get_hue_mean(self) -> np.float64:
-        return self._compute_mean(0)
+        return self._get_mean(0)
 
     def get_saturation_mean(self) -> np.float64:
-        return self._compute_mean(1)
+        return self._get_mean(1)
 
     def get_value_mean(self) -> np.float64:
-        return self._compute_mean(2)
+        return self._get_mean(2)
 
     def _get_mean(self, i):
         ret, frame = self.cap.readHSVFrame()
         return frame[:, :, i].mean()
 
     def compute_hue_mean(self, frame) -> np.float64:
-        return self._compute_mean(frame, 0)
+        return self._compute_mean(self,frame, 0)
 
     def compute_saturation_mean(self, frame) -> np.float64:
-        return self._compute_mean(frame, 1)
+        return self._compute_mean(self,frame, 1)
 
     def compute_value_mean(self, frame) -> np.float64:
-        return self._compute_mean(frame, 2)
+        return self._compute_mean(self,frame, 2)
 
-    def _compute_mean(self, frame, i):
-        return frame[:, :, i]
+    def _compute_mean(self, frame,  i):
+        return frame[:, :, i].mean()
 
     def _align_clock(self):
         curr_time = time.time()

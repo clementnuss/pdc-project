@@ -74,7 +74,7 @@ class Receiver(State_Machine):
         :return: 
         """
         self.cv_handler.display_hsv_color(S_NO_ACK)
-        State_Machine.compute_screen_boundaries(self, ONE_RANGE_NIGHT)
+        State_Machine.compute_screen_boundaries(self, ONE_RANGE)
         self.cap.set_screen_boundaries(self.screen_boundaries)
 
         self.cv_handler.display_hsv_color(S_ACK)
