@@ -21,7 +21,7 @@ class State_Machine(object):
         self.tick_count = 0
         self.log_count = 0
 
-        if Constants.USE_MASK:
+        if USE_MASK:
             self.SYMBOL_ZERO_MASK = np.full((HEIGHT, WIDTH, 3), fill_value=S_ZERO, dtype=np.uint8)
             self.SYMBOL_ONE_MASK = np.full((HEIGHT, WIDTH, 3), fill_value=S_ONE, dtype=np.uint8)
             self.ACK_MASK = self.SYMBOL_ONE_MASK
@@ -36,7 +36,7 @@ class State_Machine(object):
             self.NO_ACK_REF = None
             self.VOID_REF = None
 
-        if Constants.SIMULATE:
+        if SIMULATE:
             self.cv_handler = None
             self.cap = None
         else:
@@ -63,7 +63,7 @@ class State_Machine(object):
             else:
                 prev_mask = mask
 
-            if not Constants.SIMULATE:
+            if not SIMULATE:
                 self.cv_handler.display_hsv_frame(
                     superimpose(self.NO_ACK_MASK, np.uint8(mask[::10, ::10])[..., np.newaxis]))
             time.sleep(0.2)
@@ -75,18 +75,44 @@ class State_Machine(object):
         self.ACK_MASK = SYMBOL_ACK_REF * self.screen_mask
         self.NO_ACK_MASK = SYMBOL_NO_ACK_REF * self.screen_mask
 
-    def compute_screen_boundaries(self, color_range):
-        converged = False
+    def compute_screen_boundaries(self, color_target):
+        hue_target = color_target
+        saturation_target = 255
+        value_target = 255
+
+        max_delta_hue = 20
+        max_delta_saturation = 130
+        max_delta_value = 130
+
         min_x = min_y = max_x = max_y = 0
 
+        iteration = 0
+        min_iteration = 0
+        max_iteration = 30
+
+        converged = False
+
         while not converged:
-            time.sleep(0.5)
+            time.sleep(0.1)
             ret, frame = self.cap.readHSVFrame()
 
-            frame_thresholded = getMask(frame, color_range)
+            hue_delta_coeff = smooth_step(2.0 * iteration, min_iteration, max_iteration)
+            delta_coeff = smooth_step(iteration, min_iteration, max_iteration)
+            iteration = iteration + 1
 
+            min_hsv = (hue_target - hue_delta_coeff * max_delta_hue,
+                       saturation_target - delta_coeff * max_delta_saturation,
+                       value_target - delta_coeff * max_delta_value)
+
+            max_hsv = (hue_target + hue_delta_coeff * max_delta_hue,
+                       saturation_target,
+                       value_target)
+
+            logging.info("Iteration with min: " + str(min_hsv) + " and max: " + str(max_hsv))
+
+            frame_thresholded = getMask(frame, min_hsv, max_hsv)
+            # self.cv_handler.display_frame(frame_thresholded)
             canny_frame = cv2.Canny(frame_thresholded, 50, 150, apertureSize=3)
-
             contoured_frame, contours0, hierarchy = cv2.findContours(canny_frame, mode=cv2.RETR_EXTERNAL,
                                                                      method=cv2.CHAIN_APPROX_SIMPLE)
 
@@ -95,7 +121,7 @@ class State_Machine(object):
 
             logging.info("Got " + str(len(contours)) + " contours")
 
-            if 20 > len(contours) > 0:
+            if 10 > len(contours) > 0:
 
                 # Filter contours
                 most_beautiful_contour = None
@@ -103,46 +129,51 @@ class State_Machine(object):
 
                 for cnt in contours:
                     area = cv2.contourArea(cnt, oriented=False)
+
+                    cntmin_x = np.min(cnt[:, 0, 0])
+                    cntmax_x = np.max(cnt[:, 0, 0])
+                    cntmin_y = np.min(cnt[:, 0, 1])
+                    cntmax_y = np.max(cnt[:, 0, 1])
+
+                    if (cntmin_x < WIDTH / DETECTION_PROPORTION or
+                                cntmin_y < HEIGHT / DETECTION_PROPORTION or
+                                cntmax_x > (WIDTH - WIDTH / DETECTION_PROPORTION) or
+                                cntmax_y > (HEIGHT - HEIGHT / DETECTION_PROPORTION)):
+                        print("Skipping contour, out of bounds")
+                        continue
+
                     print(area)
-                    if 30000 > area > 20 and cv2.isContourConvex(cnt):
+                    if 30000 > area > 40 and cv2.isContourConvex(cnt):
                         if area > max_area:
                             max_area = area
                             most_beautiful_contour = cnt
 
-                if most_beautiful_contour is None:
-                    continue
+                if most_beautiful_contour is not None:
+                    # cv2.drawContours(frame, [most_beautiful_contour], -1, (255, 255, 255), thickness=2)
 
-                # cv2.drawContours(frame, [most_beautiful_contour], -1, (255, 255, 255), thickness=2)
+                    3
+                    self.cv_handler.display_hsv_frame(frame)
 
-                # self.cv_handler.display_hsv_frame(frame)
+                    # Extract interesting portion of image
+                    newmin_x = np.min(most_beautiful_contour[:, 0, 0])
+                    newmax_x = np.max(most_beautiful_contour[:, 0, 0])
+                    newmin_y = np.min(most_beautiful_contour[:, 0, 1])
+                    newmax_y = np.max(most_beautiful_contour[:, 0, 1])
 
-                # Extract interesting portion of image
-                newmin_x = np.min(most_beautiful_contour[:, 0, 0])
-                newmax_x = np.max(most_beautiful_contour[:, 0, 0])
-                newmin_y = np.min(most_beautiful_contour[:, 0, 1])
-                newmax_y = np.max(most_beautiful_contour[:, 0, 1])
+                    d1 = abs(newmin_x - min_x)
+                    d2 = abs(newmin_y - min_y)
+                    d3 = abs(newmax_x - max_x)
+                    d4 = abs(newmax_y - max_y)
 
-                d1 = abs(newmin_x - min_x)
-                d2 = abs(newmin_y - min_y)
-                d3 = abs(newmax_x - max_x)
-                d4 = abs(newmax_y - max_y)
-
-                if [d1, d2, d3, d4] < [State_Machine.CONVERGENCE_BOUND_THRESHOLD] * 4:
-                    if (newmin_x > WIDTH / DETECTION_PROPORTION and
-                                newmin_y > HEIGHT / DETECTION_PROPORTION and
-                                newmax_x < (WIDTH - WIDTH / DETECTION_PROPORTION) and
-                                newmax_y < (HEIGHT - HEIGHT / DETECTION_PROPORTION)):
+                    if [d1, d2, d3, d4] < [State_Machine.CONVERGENCE_BOUND_THRESHOLD] * 4:
                         converged = True
+                        cv2.rectangle(frame, (min_x, min_y), (max_x, max_y), (0, 255, 0), thickness=2)
+                        cv2.imwrite("../captured.jpg", frame)
 
-                min_x = newmin_x + 1
-                max_x = newmax_x
-                min_y = newmin_y + 1
-                max_y = newmax_y
-
-                cv2.rectangle(frame, (min_x, min_y), (max_x, max_y), (0, 255, 0), thickness=5)
-                cv2.imwrite("../captured.jpg", frame)
-                #self.cv_handler.display_hsv_frame(
-                 #   superimpose(SYMBOL_NO_ACK_REF, crop(frame, (min_x, max_x, min_y, max_y))))
+                    min_x = newmin_x + 1
+                    max_x = newmax_x
+                    min_y = newmin_y + 1
+                    max_y = newmax_y
 
         self.screen_boundaries = (min_x, max_x, min_y, max_y)
         State_Machine._compute_references_values(self)

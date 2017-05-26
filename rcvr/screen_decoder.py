@@ -34,6 +34,9 @@ def initialize_gui():
     create_trackbar('V_min', 0, 255)
     create_trackbar('V_max', 0, 255)
     cv2.setTrackbarPos('V_max', TRACKBAR_WINDOW, 255)
+    create_trackbar('Canny_tres0', 0, 255)
+    create_trackbar('Canny_tres1', 0, 255)
+
     cv2.resizeWindow(TRACKBAR_WINDOW, 400, 300)
 
 
@@ -88,7 +91,7 @@ def main():
 
 def smooth_step(x, edge0, edge1):
     t = np.clip((x - edge0) / (edge1 - edge0), 0.0, 1.0);
-    return t * t * (3.0 - 2.0 * t);
+    return t * t * (3.0 - 2.0 * t)
 
 def main_contour():
     hue_target = 15
@@ -105,7 +108,7 @@ def main_contour():
     min_iteration = 0
     max_iteration = 30
 
-    manual = False
+    manual = True
 
     converged = False
     kernel = np.ones((7, 7), np.uint8)
@@ -127,15 +130,22 @@ def main_contour():
                    saturation_target,
                    value_target)
 
+        canny0 = 50
+        canny1 = 150
+
         if manual:
             min_hsv = np.array(get_min_hsv(), np.uint8)
             max_hsv = np.array(get_max_hsv(), np.uint8)
+            canny0 = get_trackbar_value('Canny_tres0')
+            canny1 = get_trackbar_value('Canny_tres1')
+            print(canny0)
+            print(canny1)
 
         print("Iteration with min: " + str(min_hsv) + " and max: " + str(max_hsv))
         frame_thresholded = cv2.inRange(frame, min_hsv, max_hsv)
         frame_thresholded = cv2.morphologyEx(frame_thresholded, cv2.MORPH_OPEN, kernel)
         cv2.imshow('hsv_thresholded', frame_thresholded)
-        canny_frame = cv2.Canny(frame_thresholded, 50, 150, apertureSize=3)
+        canny_frame = cv2.Canny(frame_thresholded, canny0, canny1, apertureSize=3)
         cv2.imshow('canny result', canny_frame)
         contoured_frame, contours0, hierarchy = cv2.findContours(canny_frame, mode=cv2.RETR_EXTERNAL,
                                                                  method=cv2.CHAIN_APPROX_SIMPLE)

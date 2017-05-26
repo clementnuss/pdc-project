@@ -1,11 +1,23 @@
 import cv2
 import numpy as np
 
-ERODE_KERNEL_SIZE = 5
+ERODE_KERNEL_SIZE = 7
+
+
+def smooth_step(x, edge0, edge1):
+    t = np.clip((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+    return t * t * (3.0 - 2.0 * t);
 
 
 def getMask(frame, color_range):
     processed_frame = cv2.inRange(frame, color_range.min_bounds(), color_range.max_bounds())
+    # Erode and dilate the image to remove noise from the HSV filtering
+    kernel = np.ones((ERODE_KERNEL_SIZE, ERODE_KERNEL_SIZE), np.uint8)
+    return cv2.morphologyEx(processed_frame, cv2.MORPH_OPEN, kernel)
+
+
+def getMask(frame, min_range, max_range):
+    processed_frame = cv2.inRange(frame, min_range, max_range)
     # Erode and dilate the image to remove noise from the HSV filtering
     kernel = np.ones((ERODE_KERNEL_SIZE, ERODE_KERNEL_SIZE), np.uint8)
     return cv2.morphologyEx(processed_frame, cv2.MORPH_OPEN, kernel)

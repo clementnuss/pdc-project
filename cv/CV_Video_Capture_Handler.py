@@ -1,10 +1,11 @@
 import threading
-from typing import Tuple
+import time
 
 import cv2
+import numpy as np
+from typing import Tuple
 
 from cv.ImageProcessing import crop
-import numpy as np
 
 
 class CV_Video_Capture_Handler:
@@ -36,6 +37,7 @@ class CV_Video_Capture_Handler:
             self.process = threading.Thread(target=self._frame_continuous_poll)
             self.process.setDaemon(True)
             self.process.start()
+            time.sleep(0.5)
             print("Video width: %f" % self.width)
             print("Video height: %f" % self.height)
 

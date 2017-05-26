@@ -89,6 +89,10 @@ class OpenCvHandler:
         resized_frame = cv2.cvtColor(resized_frame, cv2.COLOR_HSV2BGR)
         self.send_new_frame(resized_frame)
 
+    def display_frame(self, frame):
+        resized_frame = scm.imresize(frame, (WIDTH, HEIGHT), interp='bilinear')
+        self.send_new_frame(resized_frame)
+
 if __name__ == '__main__':
     test = np.zeros((1, 1, 3))
     print(test)

@@ -27,7 +27,7 @@ class Transmitter(State_Machine):
         self.last_byte_sent = None
         self.receiver_ack = True
 
-        if Constants.SIMULATE:
+        if SIMULATE:
             simulation_handler = Constants.SIMULATION_HANDLER
             self.cv_handler = simulation_handler.tmtr
             self.cap = simulation_handler.tmtr
@@ -74,7 +74,7 @@ class Transmitter(State_Machine):
         """
 
         self.cv_handler.display_hsv_color(S_NO_ACK)
-        State_Machine.compute_screen_boundaries(self, ZERO_RANGE)
+        State_Machine.compute_screen_boundaries(self, S_NO_ACK[0, 0, 0])
         self.cap.set_screen_boundaries(self.screen_boundaries)
 
         self.cv_handler.display_hsv_color(S_ACK)
