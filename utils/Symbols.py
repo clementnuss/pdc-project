@@ -16,8 +16,8 @@ SYMBOL_ZERO_REF = np.full((HEIGHT, WIDTH, 3), fill_value=S_ZERO, dtype=np.uint8)
 SYMBOL_NO_ACK_REF = np.full((HEIGHT, WIDTH, 3), fill_value=S_NO_ACK, dtype=np.uint8)
 SYMBOL_VOID_REF = np.full((HEIGHT, WIDTH, 3), fill_value=S_VOID, dtype=np.uint8)
 
-ZERO_RANGE = HSVBounds(np.uint8(0), np.uint8(30), np.uint8(100), np.uint8(255), np.uint8(140), np.uint8(255))
-ONE_RANGE = HSVBounds(np.uint8(90), np.uint8(120), np.uint8(155), np.uint8(255), np.uint8(120), np.uint8(255))
+ZERO_RANGE = HSVBounds(np.uint8(0), np.uint8(30), np.uint8(125), np.uint8(255), np.uint8(150), np.uint8(255))
+ONE_RANGE = HSVBounds(np.uint8(90), np.uint8(120), np.uint8(155), np.uint8(255), np.uint8(170), np.uint8(255))
 ZERO_RANGE_NIGHT = HSVBounds(np.uint8(0), np.uint8(30), np.uint8(80), np.uint8(255), np.uint8(200), np.uint8(255))
 ONE_RANGE_NIGHT = HSVBounds(np.uint8(90), np.uint8(120), np.uint8(200), np.uint8(255), np.uint8(200), np.uint8(255))
 

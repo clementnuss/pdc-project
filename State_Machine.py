@@ -135,7 +135,8 @@ class State_Machine(object):
                 min_y = newmin_y + 1
                 max_y = newmax_y
 
-                # cv2.rectangle(frame, (min_x, min_y), (max_x, max_y), (0, 255, 0), thickness=5)
+                cv2.rectangle(frame, (min_x, min_y), (max_x, max_y), (0, 255, 0), thickness=5)
+                cv2.imwrite("../captured.jpg", frame)
                 #self.cv_handler.display_hsv_frame(
                  #   superimpose(SYMBOL_NO_ACK_REF, crop(frame, (min_x, max_x, min_y, max_y))))
 
