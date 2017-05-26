@@ -86,31 +86,62 @@ def main():
             break
 
 
+def smooth_step(x, edge0, edge1):
+    t = np.clip((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+    return t * t * (3.0 - 2.0 * t);
+
 def main_contour():
-    while True:
+    hue_target = 15
+    saturation_target = 255
+    value_target = 255
+
+    max_delta_hue = 20
+    max_delta_saturation = 130
+    max_delta_value = 130
+
+    min_x = min_y = max_x = max_y = 0
+
+    iteration = 0
+    min_iteration = 0
+    max_iteration = 30
+
+    manual = False
+
+    converged = False
+    kernel = np.ones((7, 7), np.uint8)
+
+    while not converged:
+        time.sleep(0.1)
+
         ret, frame = cap.readHSVFrame()
 
-        min_hsv = np.array(get_min_hsv(), np.uint8)
-        max_hsv = np.array(get_max_hsv(), np.uint8)
+        hue_delta_coeff = smooth_step(2.0 * iteration, min_iteration, max_iteration)
+        delta_coeff = smooth_step(iteration, min_iteration, max_iteration)
+        iteration = iteration + 1
 
+        min_hsv = (hue_target - hue_delta_coeff * max_delta_hue,
+                   saturation_target - delta_coeff * max_delta_saturation,
+                   value_target - delta_coeff * max_delta_value)
+
+        max_hsv = (hue_target + hue_delta_coeff * max_delta_hue,
+                   saturation_target,
+                   value_target)
+
+        if manual:
+            min_hsv = np.array(get_min_hsv(), np.uint8)
+            max_hsv = np.array(get_max_hsv(), np.uint8)
+
+        print("Iteration with min: " + str(min_hsv) + " and max: " + str(max_hsv))
         frame_thresholded = cv2.inRange(frame, min_hsv, max_hsv)
-
-        # We erode and dilate the image to remove noise from the HSV filtering More info here:
-        # http://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_morphological_ops/py_morphological_ops.html
-        kernel = np.ones((5, 5), np.uint8)
         frame_thresholded = cv2.morphologyEx(frame_thresholded, cv2.MORPH_OPEN, kernel)
         cv2.imshow('hsv_thresholded', frame_thresholded)
-
         canny_frame = cv2.Canny(frame_thresholded, 50, 150, apertureSize=3)
         cv2.imshow('canny result', canny_frame)
-
         contoured_frame, contours0, hierarchy = cv2.findContours(canny_frame, mode=cv2.RETR_EXTERNAL,
                                                                  method=cv2.CHAIN_APPROX_SIMPLE)
-
         contours = [cv2.approxPolyDP(cnt, 3, True) for cnt in contours0]
 
-
-        if len(contours) < 20 and len(contours) > 0:
+        if len(contours) < 10 and len(contours) > 0:
 
             print("Got " + str(len(contours)) + " contours")
             # Filter contours
@@ -135,30 +166,46 @@ def main_contour():
 
                 print(area)
 
-                if 30000 > area > 50 and cv2.isContourConvex(cnt):
+                if 30000 > area > 500 and cv2.isContourConvex(cnt):
                     if area > max_area:
                         max_area = area
                         most_beautiful_contour = cnt
 
             if most_beautiful_contour is not None:
                 cv2.drawContours(frame, [most_beautiful_contour], -1, (255, 255, 255), thickness=2)
-
                 cv2.imshow('contoured frame', frame)
 
-                # Extract interesting portion of image
-                min_x = np.min(most_beautiful_contour[:, 0, 0])
-                max_x = np.max(most_beautiful_contour[:, 0, 0])
-                min_y = np.min(most_beautiful_contour[:, 0, 1])
-                max_y = np.max(most_beautiful_contour[:, 0, 1])
+                newmin_x = np.min(most_beautiful_contour[:, 0, 0])
+                newmax_x = np.max(most_beautiful_contour[:, 0, 0])
+                newmin_y = np.min(most_beautiful_contour[:, 0, 1])
+                newmax_y = np.max(most_beautiful_contour[:, 0, 1])
 
-                cv2.rectangle(frame, (min_x, min_y), (max_x, max_y), (0, 255, 0), thickness=5)
-                cv2.imshow('bounded frame', frame)
+                d1 = abs(newmin_x - min_x)
+                d2 = abs(newmin_y - min_y)
+                d3 = abs(newmax_x - max_x)
+                d4 = abs(newmax_y - max_y)
+
+                if [d1, d2, d3, d4] < [10] * 4:
+                    if not manual:
+                        converged = True
+                    cv2.rectangle(frame, (min_x, min_y), (max_x, max_y), (0, 255, 0), thickness=2)
+                    cv2.imshow('bounded frame', frame)
+                else:
+                    print("Not converged yet")
+
+                min_x = newmin_x + 1
+                max_x = newmax_x
+                min_y = newmin_y + 1
+                max_y = newmax_y
 
 
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
+    while True:
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
 def pass_through():
     frame_time = 0
