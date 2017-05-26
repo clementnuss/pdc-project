@@ -20,6 +20,20 @@ def compute_score(masked_frame, color_ref):
     return np.sum(diff)
 
 
+def compute_cyclic_score(value: np.uint8, reference_value: np.uint8) -> int:
+    """
+    Intended to be used with mean values instead of whole frames
+    
+    :param value: 
+    :param reference_value: 
+    :return: 
+    """
+    delta = 90 - reference_value
+
+    adjusted_value = (np.int32(value) + delta) % 180
+    diff = adjusted_value - 90
+    return diff * diff
+
 def superimpose(big_frame, small_frame):
     row, col, depth = small_frame.shape
     big_frame[0:row, 0:col, :] = small_frame
@@ -39,4 +53,4 @@ if __name__ == '__main__':
 
     a1[0:2, 0:2, :] = a2
 
-    print(a1)
+    print(compute_cyclic_score(np.uint8(170), np.uint8(0)))
