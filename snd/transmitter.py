@@ -36,6 +36,8 @@ class Transmitter(State_Machine):
 
         self._load_file(file_name)
 
+        print('tmp')
+
     def run(self):
 
         while True:
@@ -72,8 +74,8 @@ class Transmitter(State_Machine):
     
         :return: 
         """
-
         self.cv_handler.display_hsv_color(S_NO_ACK)
+        time.sleep(2)
         State_Machine.compute_screen_boundaries(self, ZERO_RANGE)
         self.cap.set_screen_boundaries(self.screen_boundaries)
 
@@ -99,11 +101,11 @@ class Transmitter(State_Machine):
         while not self.receiver_ack:
 
             State_Machine._align_clock(self)
-            ack_score, no_ack_score = State_Machine.get_ack_scores(self)
+            hue_mean = State_Machine.get_hue_mean(self)
 
-            logging.info("Ack score: " + str(ack_score) + " No ack score: " + str(no_ack_score))
+            logging.info("Hue mean: " + str(hue_mean))
 
-            if ack_score < no_ack_score:
+            if abs(hue_mean - S_ACK[0,0,0]) < abs(hue_mean - S_NO_ACK[0,0,0]):
                 curr_time = time.time()
                 self.clock_start = curr_time
                 logging.info(
@@ -112,7 +114,7 @@ class Transmitter(State_Machine):
                 self.receiver_ack = True
 
                 # Screen goes black, meaning that at next epoch second, receiver clock fires up and get in sync
-                self.cv_handler.display_hsv_color(S_VOID)
+                self.cv_handler.display_hsv_color(S_NO_ACK)
                 self.state = State.CALIBRATE
                 State_Machine.sleep_until_next_tick(self)
                 logging.info("Transmitter finished the synchronization phase")
@@ -149,7 +151,7 @@ class Transmitter(State_Machine):
             processed_b = processed_b >> NUM_BITS
 
             self.cv_handler.display_hsv_color(symbol_to_send)
-            logging.info(str(symbol_index) + " at time " + str(time.time()))
+            logging.info(str(symbol_index) + " hue: " + str(symbol_to_send[0]) + " at time " + str(time.time()))
             State_Machine.sleep_until_next_tick(self)
 
     def do_calibrate(self):
@@ -171,11 +173,11 @@ class Transmitter(State_Machine):
         # wait one tick for receiver ack
         State_Machine.sleep_until_next_tick(self)
 
-        ack_score, no_ack_score = State_Machine.get_ack_scores(self)
+        hue_mean = State_Machine.get_hue_mean(self)
 
-        logging.info("Ack score: " + str(ack_score) + " No ack score: " + str(no_ack_score))
+        logging.info("Hue mean: " + str(hue_mean))
 
-        if (ack_score < no_ack_score):
+        if abs(hue_mean - S_ACK[0, 0, 0]) < abs(hue_mean - S_NO_ACK[0, 0, 0]):
             logging.info("Got ACK")
             self.receiver_ack = True
             self.state = State.SEND

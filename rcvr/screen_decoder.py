@@ -150,7 +150,7 @@ def pass_through():
     frame_count = 0
     while 1:
         last_frame_time = time.time()
-        ret, frame = cap.readFrame()
+        ret, frame = cap.readHSVFrame()
         frame_time = time.time()
 
         frame_count = frame_count + 1
@@ -165,9 +165,9 @@ def pass_through():
 
 if __name__ == '__main__':
     time.sleep(0.5)
-    # pass_through()
+    pass_through()
     initialize_gui()
-    main_contour()
+    #main_contour()
 
     # When everything done, release the capture
     input("Press Enter")

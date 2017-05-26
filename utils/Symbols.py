@@ -29,9 +29,12 @@ SYMBOLS = np.zeros((NUM_SYMBOLS, 1,1,3), dtype=np.uint8)
 
 
 def initialize_symbols():
-    hue_symbol_distance = 160.0 / NUM_SYMBOLS
+    hue_symbol_distance = 140.0 / NUM_SYMBOLS
     for s in range(NUM_SYMBOLS):
-        SYMBOLS[s] = np.array([[[np.uint8(10 + hue_symbol_distance * s), np.uint8(255), np.uint8(255)]]])
+        SYMBOLS[s] = np.array([[[np.uint8(20 + hue_symbol_distance * s), np.uint8(255), np.uint8(255)]]])
 
 
 initialize_symbols()
+
+if __name__ == '__main__':
+    print("test")
