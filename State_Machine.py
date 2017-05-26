@@ -10,7 +10,7 @@ from utils.Symbols import *
 
 
 class State_Machine(object):
-    TRANSMISSION_RATE = 1.0 / 4.0
+    TRANSMISSION_RATE = 1.0 / 1.0
     SAMPLING_OFFSET = TRANSMISSION_RATE / 2.0
     CONVERGENCE_BOUND_THRESHOLD = 15
     CONVERGENCE_THRESHOLD = 10000
@@ -42,9 +42,6 @@ class State_Machine(object):
         else:
             self.cv_handler = cv.CV_GUI_Handler.OpenCvHandler()
             self.cap = cv.CV_Video_Capture_Handler.CV_Video_Capture_Handler()
-
-
-
 
     def compute_screen_mask(self, color_range):
         converged = False
@@ -190,8 +187,29 @@ class State_Machine(object):
         return first_score, second_score
 
     def get_hue_mean(self) -> np.float64:
+        return self._compute_mean(0)
+
+    def get_saturation_mean(self) -> np.float64:
+        return self._compute_mean(1)
+
+    def get_value_mean(self) -> np.float64:
+        return self._compute_mean(2)
+
+    def _get_mean(self, i):
         ret, frame = self.cap.readHSVFrame()
-        return frame[:, :, 0].mean()
+        return frame[:, :, i].mean()
+
+    def compute_hue_mean(self, frame) -> np.float64:
+        return self._compute_mean(frame, 0)
+
+    def compute_saturation_mean(self, frame) -> np.float64:
+        return self._compute_mean(frame, 1)
+
+    def compute_value_mean(self, frame) -> np.float64:
+        return self._compute_mean(frame, 2)
+
+    def _compute_mean(self, frame, i):
+        return frame[:, :, i]
 
     def _align_clock(self):
         curr_time = time.time()

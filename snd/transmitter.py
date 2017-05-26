@@ -71,7 +71,7 @@ class Transmitter(State_Machine):
         """
 
         self.cv_handler.display_hsv_color(S_NO_ACK)
-        State_Machine.compute_screen_boundaries(self, ZERO_RANGE_NIGHT)
+        State_Machine.compute_screen_boundaries(self, ZERO_RANGE)
         self.cap.set_screen_boundaries(self.screen_boundaries)
 
         self.cv_handler.display_hsv_color(S_ACK)

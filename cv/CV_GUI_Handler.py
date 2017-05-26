@@ -25,7 +25,7 @@ class OpenCvHandler:
 
     def wait_key_func(self):
         print("Initializing main window")
-        cv2.namedWindow(MAIN_WINDOW, cv2.WINDOW_KEEPRATIO)
+        cv2.namedWindow(MAIN_WINDOW, cv2.WINDOW_KEEPRATIO | cv2.WINDOW_AUTOSIZE)
         if Constants.SIMULATE:
             cv2.namedWindow(SECONDARY_WINDOW, cv2.WINDOW_GUI_EXPANDED | cv2.WINDOW_KEEPRATIO)
         cv2.startWindowThread()
