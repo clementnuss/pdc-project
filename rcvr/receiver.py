@@ -7,6 +7,7 @@ from utils.Symbols import *
 
 logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=logging.INFO)
 
+
 class State(Enum):
     IDLE = 'Idle'
     SCREEN_DETECTION = 'Screen detection'
@@ -106,7 +107,7 @@ class Receiver(State_Machine):
 
             self.state = State.RECEIVE
             self.cv_handler.display_hsv_color(S_VOID)
-            logging.info("Clock start is: "+ str(self.clock_start) +" Time is " + str(current_time))
+            logging.info("Clock start is: " + str(self.clock_start) + " Time is " + str(current_time))
             logging.info("Receiver finished the synchronization phase")
             State_Machine.sleep_until_next_tick(self)
 
@@ -119,19 +120,20 @@ class Receiver(State_Machine):
         symbol_count = 0
         self.decoded_byte = 0
 
-        for i in range(0, 8):
-            ret, frame = self.cap.readHSVFrame()
+        for i in range(0, 4):
 
-            self.cv_handler.display_hsv_frame(superimpose(self.VOID_REF, frame))
+            #ret, frame = self.cap.readHSVFrame()
+            #self.cv_handler.display_hsv_frame(superimpose(self.VOID_REF, frame))
 
-            zero_score, one_score = State_Machine.get_symbols_scores(self, self.SYMBOL_ZERO_REF, self.SYMBOL_ONE_REF)
+            # zero_score, one_score = State_Machine.get_symbols_scores(self, self.SYMBOL_ZERO_REF, self.SYMBOL_ONE_REF)
+            hue_mean = State_Machine.get_hue_mean(self)
+            logging.info("hue mean : " + str(hue_mean))
 
-            if (zero_score < one_score):
-                logging.info("read 0 at time " + str(time.time()))
-                self.decoded_byte = (self.decoded_byte << 1) | 1
-            else:
-                logging.info(" read 1 at time " + str(time.time()))
-                self.decoded_byte = self.decoded_byte << 1
+            detected_symbol = (np.abs(SYMBOLS[:, 0, 0, 0] - hue_mean)).argmin()
+            logging.info("detected symbol: " + str(detected_symbol))
+
+            self.decoded_byte = (detected_symbol << NUM_BITS * i) | self.decoded_byte
+
             symbol_count = symbol_count + 1
             State_Machine.sleep_until_next_tick(self)
 
@@ -146,6 +148,7 @@ class Receiver(State_Machine):
         if data_is_valid:
             self.cv_handler.display_hsv_color(S_ACK)
             self.decoded_sequence.append(self.decoded_byte)
+            logging.info("Received letter : " + chr(self.decoded_byte))
             logging.info("Sent ACK to transmitter")
         else:
             self.cv_handler.display_hsv_color(S_NO_ACK)
@@ -164,9 +167,9 @@ def main():
     r = Receiver()
     # ret, frame = rcvr.screen_decoder.getCameraSnapshot()
     # rcvr.screen_decoder.displayFrame(frame)
-    #r._compute_screen_mask()
-    #r.do_receive()
-    #r.do_validate_data()
+    # r._compute_screen_mask()
+    # r.do_receive()
+    # r.do_validate_data()
     r.run()
 
 

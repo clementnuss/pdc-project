@@ -133,9 +133,9 @@ class State_Machine(object):
                 if [d1, d2, d3, d4] < [State_Machine.CONVERGENCE_BOUND_THRESHOLD] * 4:
                     converged = True
 
-                min_x = newmin_x
+                min_x = newmin_x + 1
                 max_x = newmax_x
-                min_y = newmin_y
+                min_y = newmin_y + 1
                 max_y = newmax_y
 
                 # cv2.rectangle(frame, (min_x, min_y), (max_x, max_y), (0, 255, 0), thickness=5)
@@ -188,6 +188,10 @@ class State_Machine(object):
         second_score = compute_score(frame, second_symbol)
 
         return first_score, second_score
+
+    def get_hue_mean(self) -> np.float64:
+        ret, frame = self.cap.readHSVFrame()
+        return frame[:, :, 0].mean()
 
     def _align_clock(self):
         curr_time = time.time()

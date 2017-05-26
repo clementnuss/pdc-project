@@ -1,5 +1,6 @@
 import threading
 from time import sleep
+from typing import Tuple
 
 import cv2
 import logging
@@ -86,7 +87,7 @@ class SimulationHandler:
             resized_frame = cv2.cvtColor(resized_frame, cv2.COLOR_HSV2BGR)
             self.send_new_frame(resized_frame)
 
-        def readHSVFrame(self):
+        def readHSVFrame(self) -> Tuple[bool, np.ndarray]:
             ret, frame = True, SimulationHandler.instance.rcvr.frame
             cropped_frame = crop(simulate_camera(frame), self.screen_boundaries)
             return ret, cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2HSV)
@@ -135,7 +136,7 @@ class SimulationHandler:
             resized_frame = cv2.cvtColor(resized_frame, cv2.COLOR_HSV2BGR)
             self.send_new_frame(resized_frame)
 
-        def readHSVFrame(self):
+        def readHSVFrame(self) -> Tuple[bool, np.ndarray]:
             ret, frame = True, SimulationHandler.instance.tmtr.frame
             cropped_frame = crop(simulate_camera(frame), self.screen_boundaries)
             return ret, cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2HSV)

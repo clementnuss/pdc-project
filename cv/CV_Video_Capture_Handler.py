@@ -1,8 +1,10 @@
 import threading
+from typing import Tuple
 
 import cv2
 
 from cv.ImageProcessing import crop
+import numpy as np
 
 
 class CV_Video_Capture_Handler:
@@ -69,9 +71,9 @@ class CV_Video_Capture_Handler:
         self.screen_boundaries = bounds
         self.video_lock.release()
 
-    def readHSVFrame(self):
+    def readHSVFrame(self) -> Tuple[bool, np.ndarray]:
         return True, self._get_polled_frame()
 
-#   Commented, because we only have HSV frame now
+# Commented, because we only have HSV frame now
 #   def readFrame(self):
 #        return True, self._get_polled_frame()

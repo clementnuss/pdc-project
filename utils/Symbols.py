@@ -21,16 +21,17 @@ ONE_RANGE = HSVBounds(np.uint8(90), np.uint8(120), np.uint8(200), np.uint8(255),
 ZERO_RANGE_NIGHT = HSVBounds(np.uint8(0), np.uint8(30), np.uint8(80), np.uint8(255), np.uint8(200), np.uint8(255))
 ONE_RANGE_NIGHT = HSVBounds(np.uint8(90), np.uint8(120), np.uint8(200), np.uint8(255), np.uint8(200), np.uint8(255))
 
-NUM_BITS = 4
+NUM_BITS = 2
 NUM_SYMBOLS = np.power(2, NUM_BITS)
+BIT_MASK = NUM_SYMBOLS - 1
 
-SYMBOLS = np.zeros((NUM_SYMBOLS, 3), dtype=np.uint8)
+SYMBOLS = np.zeros((NUM_SYMBOLS, 1,1,3), dtype=np.uint8)
 
 
 def initialize_symbols():
     hue_symbol_distance = 180.0 / NUM_SYMBOLS
-    for i in range(NUM_SYMBOLS):
-        SYMBOLS[i] = np.array([[[hue_symbol_distance * i, np.uint8(255), np.uint8(255)]]])
+    for s in range(NUM_SYMBOLS):
+        SYMBOLS[s] = np.array([[[np.uint8((hue_symbol_distance * s) % 180), np.uint8(255), np.uint8(255)]]])
 
 
 initialize_symbols()

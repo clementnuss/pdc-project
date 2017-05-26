@@ -141,18 +141,14 @@ class Transmitter(State_Machine):
         :return: 
         """
         processed_b = b[0]
-        for i in range(0, 8):
-            bit_to_send = processed_b & 1
-            processed_b = processed_b >> 1
+        for i in range(0, 4):
+            symbol_index = processed_b & BIT_MASK
+            symbol_to_send = SYMBOLS[symbol_index]
+            processed_b = processed_b >> NUM_BITS
 
-            if bit_to_send:
-                self.cv_handler.display_hsv_color(S_ONE)
-                logging.info(str(1) + " at time " + str(time.time()))
-                State_Machine.sleep_until_next_tick(self)
-            else:
-                self.cv_handler.display_hsv_color(S_ZERO)
-                logging.info(str(0) + " at time " + str(time.time()))
-                State_Machine.sleep_until_next_tick(self)
+            self.cv_handler.display_hsv_color(symbol_to_send)
+            logging.info(str(symbol_index) + " at time " + str(time.time()))
+            State_Machine.sleep_until_next_tick(self)
 
     def do_receive(self):
         pass
