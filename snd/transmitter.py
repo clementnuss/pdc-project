@@ -2,8 +2,8 @@ import collections
 from enum import Enum
 
 from State_Machine import *
-from utils.Symbols import *
 from utils import Constants
+from utils.Symbols import *
 
 logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=logging.INFO)
 
@@ -78,6 +78,9 @@ class Transmitter(State_Machine):
         State_Machine.compute_screen_boundaries(self, S_NO_ACK[0, 0, 0])
         self.cap.set_screen_boundaries(self.screen_boundaries)
 
+        # Calibrate no acks
+        self._calibrate_noacks()
+
         self.cv_handler.display_hsv_color(S_ACK)
         self.state = State.SYNC_CLOCK
         logging.info("Transmitter finished the Screen detection phase")
@@ -105,10 +108,14 @@ class Transmitter(State_Machine):
             logging.info("Ack score: " + str(ack_score) + " No ack score: " + str(no_ack_score))
 
             if ack_score < no_ack_score:
+                logging.info("Got ack from receiver.")
+                self._calibrate_acks()
+
                 curr_time = time.time()
                 self.clock_start = curr_time
+
                 logging.info(
-                    "Got ACK. Blacking out screen. Current time is: " + str(curr_time) + " Clock start is: " + str(
+                    "Blacking out screen. Current time is: " + str(curr_time) + " Clock start is: " + str(
                         self.clock_start))
                 self.receiver_ack = True
 
@@ -188,6 +195,28 @@ class Transmitter(State_Machine):
         # If ack transmit next byte
         self.state = State.SEND
         State_Machine.sleep_until_next_tick(self)
+
+    def _calibrate_noacks(self):
+        hue_mean = 0.0
+
+        for x in range(0, 3):
+            hue_mean += State_Machine.get_hue_mean(self)
+            time.sleep(0.2)
+
+        hue_mean = np.round(hue_mean / 3.0)
+        logging.info("hue mean for no ack calibration was: " + str(hue_mean))
+        S_NO_ACK[0, 0, 0] = np.round(hue_mean)
+
+    def _calibrate_acks(self):
+        hue_mean = 0.0
+
+        for x in range(0, 3):
+            hue_mean += State_Machine.get_hue_mean(self)
+            time.sleep(0.2)
+
+        hue_mean = np.round(hue_mean / 3.0)
+        logging.info("hue mean for ack calibration was: " + str(hue_mean))
+        S_ACK[0, 0, 0] = np.round(hue_mean)
 
     def _load_file(self, file_name):
 

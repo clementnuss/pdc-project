@@ -10,7 +10,7 @@ from utils.Symbols import *
 
 
 class State_Machine(object):
-    TRANSMISSION_RATE = 1.0 / 0.5
+    TRANSMISSION_RATE = 1.0 / 8.0
     SAMPLING_OFFSET = TRANSMISSION_RATE / 2.0 - 1 / 60
     CONVERGENCE_BOUND_THRESHOLD = 15
     CONVERGENCE_THRESHOLD = 10000
@@ -146,7 +146,7 @@ class State_Machine(object):
                         continue
 
                     print("Contour area: " + str(area))
-                    if 30000 > area > 30 if Constants.SIMULATE else 40 and cv2.isContourConvex(cnt):
+                    if 30000 > area > 1000 if Constants.SIMULATE else 40 and cv2.isContourConvex(cnt):
                         if area > max_area:
                             max_area = area
                             most_beautiful_contour = cnt
