@@ -1,6 +1,8 @@
 import collections
 from enum import Enum
 
+import unireedsolomon
+
 from State_Machine import *
 from utils import Constants
 from utils.Symbols import *
@@ -24,9 +26,10 @@ class Transmitter(State_Machine):
         State_Machine.__init__(self)
         self.state = State.SCREEN_DETECTION
         self.byte_sequence = collections.deque()
-        self.byte_count = 0
-        self.last_byte_sent = None
+        self.packet_count = 0
+        self.last_data_packet = None
         self.receiver_ack = True
+        self.rs_coder = unireedsolomon.RSCoder(Constants.RS_codeword_size, Constants.RS_message_size)
 
         if Constants.SIMULATE:
             simulation_handler = Constants.SIMULATION_HANDLER
@@ -128,33 +131,53 @@ class Transmitter(State_Machine):
                 logging.info("NO ACK")
 
     def do_send(self):
-        byte_to_send = None
+        data_packet = collections.deque()
 
         if self.receiver_ack:
             self.receiver_ack = False
-            self.byte_count = self.byte_count + 1
-            logging.info("Transmitting byte: " + str(self.byte_count))
-            byte_to_send = self.byte_sequence.popleft()
+            self.packet_count = self.packet_count + 1
+            logging.info("Transmitting data packet: " + str(self.packet_count))
+            for i in range(0, Constants.RS_message_size):
+                next_byte = self.byte_sequence.popleft() if len(self.byte_sequence) > 0 else bytes([0])
+                data_packet.append(next_byte[0])
         else:
-            logging.warning("Retransmitting previous data")
-            byte_to_send = self.last_byte_sent
+            logging.warning("Retransmitting previous data packet")
+            data_packet = self.last_data_packet
 
-        self.last_byte_sent = byte_to_send
-        self._send_byte(byte_to_send)
+        self.last_data_packet = data_packet.copy()
+        self._send_packet(data_packet)
         self.state = State.WAIT_FOR_ACK
 
-    def _send_byte(self, b):
+    def _send_packet(self, data: collections.deque):
         """
         Send one byte starting from the least significant bit
         
-        :param b: 
+        :param data: 
         :return: 
         """
-        processed_b = b[0]
-        for i in range(0, 4):
-            symbol_index = processed_b & BIT_MASK
+
+        # A data packet contains 8 bytes, and the RS message is 12 bytes long
+        rs_encoded = self.rs_coder.encode(data, return_string=False)
+        rs_encoded_cnt = 0
+
+        num_bits_to_send = 0
+        num_symbols = 8 * Constants.RS_codeword_size / 3
+        processed_b = 0
+
+        for i in range(0, int(np.ceil(num_symbols))):
+            if num_bits_to_send < NUM_BITS:
+                # We first shift the unsent bits to the left in order to leave 8 bits free, and we add the next
+                # data byte to the right of processed_b
+
+                # we only keep the num_bits_to_send digits, and we then shift processed_b to the left
+                processed_b &= 2 ** num_bits_to_send - 1
+                processed_b = (processed_b << 8) | int(rs_encoded[rs_encoded_cnt])
+                rs_encoded_cnt += 1
+                num_bits_to_send += 8
+
+            symbol_index = (processed_b >> num_bits_to_send - NUM_BITS) & BIT_MASK
             symbol_to_send = SYMBOLS[symbol_index]
-            processed_b = processed_b >> NUM_BITS
+            num_bits_to_send -= NUM_BITS
 
             self.cv_handler.display_hsv_color(symbol_to_send)
             logging.info(str(symbol_index) + " at time " + str(time.time()))

@@ -1,4 +1,4 @@
-from utils.Constants import WIDTH, HEIGHT
+from utils.Constants import WIDTH, HEIGHT, NUM_BITS
 from utils.HSVBounds import *
 
 S_VOID = 0
@@ -21,7 +21,6 @@ ONE_RANGE = HSVBounds(np.uint8(90), np.uint8(120), np.uint8(155), np.uint8(255),
 ZERO_RANGE_NIGHT = HSVBounds(np.uint8(0), np.uint8(30), np.uint8(80), np.uint8(255), np.uint8(130), np.uint8(255))
 ONE_RANGE_NIGHT = HSVBounds(np.uint8(90), np.uint8(120), np.uint8(200), np.uint8(255), np.uint8(200), np.uint8(255))
 
-NUM_BITS = 3
 NUM_SYMBOLS = np.power(2, NUM_BITS)
 BIT_MASK = NUM_SYMBOLS - 1
 

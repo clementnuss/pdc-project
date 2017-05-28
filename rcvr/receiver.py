@@ -1,6 +1,8 @@
 import collections
 from enum import Enum
 
+import unireedsolomon
+
 from State_Machine import *
 from cv.ImageProcessing import *
 from utils import Constants
@@ -33,11 +35,12 @@ class Receiver(State_Machine):
         State_Machine.__init__(self)
 
         self.state = State.SCREEN_DETECTION
-        self.decoded_byte = 0
-        self.decoded_byte_count = 0
+        self.data_packet = np.array
+        self.decoded_packet_count = 0
         self.decoded_sequence = collections.deque()
         self.bitCount = 0
         self.screen_mask = None
+        self.rs_coder = unireedsolomon.RSCoder(Constants.RS_codeword_size, Constants.RS_message_size)
 
         if Constants.SIMULATE:
             simulation_handler = Constants.SIMULATION_HANDLER
@@ -136,41 +139,49 @@ class Receiver(State_Machine):
 
     def do_receive(self):
 
-        self.decoded_byte_count = self.decoded_byte_count + 1
+        logging.info("Decoding packet number " + str(self.decoded_packet_count))
 
-        logging.info("Decoding byte number " + str(self.decoded_byte_count))
+        processed_b = 0
+        num_unset_bits = 8
+        byte_idx = 0
+        self.data_packet = np.empty(12, np.uint8)
 
-        symbol_count = 0
-        self.decoded_byte = 0
-
-        for i in range(0, 4):
-            # ret, frame = self.cap.readHSVFrame()
-            # self.cv_handler.display_hsv_frame(superimpose(self.VOID_REF, frame))
-
-            # zero_score, one_score = State_Machine.get_symbols_scores(self, self.SYMBOL_ZERO_REF, self.SYMBOL_ONE_REF)
+        for i in range(0, Constants.num_symbols):
             hue_mean = State_Machine.get_hue_mean(self)
             logging.info("hue mean : " + str(hue_mean))
 
             detected_symbol = (np.abs(SYMBOLS[:] - hue_mean)).argmin()
             logging.info("detected symbol: " + str(detected_symbol))
 
-            self.decoded_byte = (detected_symbol << NUM_BITS * i) | self.decoded_byte
+            if num_unset_bits >= NUM_BITS:
+                processed_b |= detected_symbol << num_unset_bits - NUM_BITS
+                num_unset_bits -= NUM_BITS
+            else:
+                bit_shift = NUM_BITS - num_unset_bits
+                processed_b |= detected_symbol >> bit_shift
+                self.data_packet[byte_idx] = processed_b
+                byte_idx += 1
+                processed_b = (detected_symbol & (2 ** bit_shift - 1)) << 8 - bit_shift
+                num_unset_bits = 8 - (NUM_BITS - num_unset_bits)
 
-            symbol_count = symbol_count + 1
             State_Machine.sleep_until_next_tick(self)
 
+        self.data_packet[byte_idx] = processed_b
         self.state = State.VALIDATE_DATA
 
     def do_check(self):
         pass
 
     def do_validate_data(self):
-        data_is_valid = True
+        data_is_valid = self.rs_coder.check(self.data_packet)
 
         if data_is_valid:
+            self.decoded_packet_count = self.decoded_packet_count + 1
             self.cv_handler.display_hsv_color(S_ACK)
-            self.decoded_sequence.append(self.decoded_byte)
-            logging.info("Received letter : " + chr(self.decoded_byte))
+            msg, ecc = self.rs_coder.decode(self.data_packet, return_string=False)
+            for b in msg:
+                self.decoded_sequence.append(b)
+            logging.info("Received message : " + ''.join([chr(b) for b in msg]))
             logging.info("Sent ACK to transmitter")
         else:
             self.cv_handler.display_hsv_color(S_NO_ACK)
@@ -180,12 +191,8 @@ class Receiver(State_Machine):
         self.cv_handler.black_out()
         self.state = State.RECEIVE
 
-        if len(self.decoded_sequence) % 10 == 0:
-            str = ""
-            for b in self.decoded_sequence:
-                str += chr(b)
-
-            logging.info("So far, received: " + str)
+        if self.decoded_packet_count % 5 == 0:
+            logging.info("So far, received: " + ''.join([chr(b) for b in self.decoded_sequence]))
 
         State_Machine.sleep_until_next_tick(self)
 
