@@ -93,7 +93,7 @@ class State_Machine(object):
         converged = False
 
         while not converged:
-            time.sleep(0.1)
+            time.sleep(0.2)
             ret, frame = self.cap.readHSVFrame()
 
             hue_delta_coeff = smooth_step(2.0 * iteration, min_iteration, max_iteration)
