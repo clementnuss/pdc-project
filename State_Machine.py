@@ -146,7 +146,7 @@ class State_Machine(object):
                         continue
 
                     print("Contour area: " + str(area))
-                    if 30000 > area > 1000 if Constants.SIMULATE else 40 and cv2.isContourConvex(cnt):
+                    if 30000 > area > 30 if Constants.SIMULATE else 1000 and cv2.isContourConvex(cnt):
                         if area > max_area:
                             max_area = area
                             most_beautiful_contour = cnt
@@ -183,11 +183,11 @@ class State_Machine(object):
         dx = self.screen_boundaries[1] - self.screen_boundaries[0] + 1
         dy = self.screen_boundaries[3] - self.screen_boundaries[2] + 1
 
-        self.SYMBOL_ONE_REF = np.full((dy, dx, 3), fill_value=S_ONE, dtype=np.uint8)
-        self.SYMBOL_ZERO_REF = np.full((dy, dx, 3), fill_value=S_ZERO, dtype=np.uint8)
-        self.ACK_REF = np.full((dy, dx, 3), fill_value=S_ACK, dtype=np.uint8)
-        self.NO_ACK_REF = np.full((dy, dx, 3), fill_value=S_NO_ACK, dtype=np.uint8)
-        self.VOID_REF = np.full((dy, dx, 3), fill_value=S_VOID, dtype=np.uint8)
+        self.SYMBOL_ONE_REF = np.full((dy, dx, 3), fill_value=[S_ONE, 255, 255], dtype=np.uint8)
+        self.SYMBOL_ZERO_REF = np.full((dy, dx, 3), fill_value=[S_ZERO, 255, 255], dtype=np.uint8)
+        self.ACK_REF = np.full((dy, dx, 3), fill_value=[S_ACK, 255, 255], dtype=np.uint8)
+        self.NO_ACK_REF = np.full((dy, dx, 3), fill_value=[S_NO_ACK, 255, 255], dtype=np.uint8)
+        self.VOID_REF = np.full((dy, dx, 3), fill_value=[S_VOID, 0, 0], dtype=np.uint8)
 
     def get_masked_ack_scores(self):
         ret, frame = self.cap.readHSVFrame()
@@ -201,8 +201,8 @@ class State_Machine(object):
     def get_ack_scores(self):
         hue_mean = self.get_hue_mean()
         logging.info("Hue mean for ack score computation is: " + str(hue_mean))
-        ack_score = compute_cyclic_score(hue_mean, np.float64(S_ACK[0, 0, 0]))
-        no_ack_score = compute_cyclic_score(hue_mean, np.float64(S_NO_ACK[0, 0, 0]))
+        ack_score = compute_cyclic_score(hue_mean, np.float64(S_ACK))
+        no_ack_score = compute_cyclic_score(hue_mean, np.float64(S_NO_ACK))
 
         return ack_score, no_ack_score
 

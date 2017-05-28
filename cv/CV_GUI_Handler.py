@@ -11,6 +11,7 @@ WIDTH = 800
 HEIGHT = 600
 MAIN_WINDOW = 'main_window'
 SECONDARY_WINDOW = 'secondary_window'
+NO_FRAME = np.full((HEIGHT, WIDTH, 3), [0, 0, 0], dtype=np.uint8)
 
 
 class OpenCvHandler:
@@ -80,9 +81,12 @@ class OpenCvHandler:
 
     def display_hsv_color(self, hsv_col):
         """Converts the given color from HSV to BGR, and displays it"""
-        converted_color = cv2.cvtColor(hsv_col, cv2.COLOR_HSV2BGR)
+        converted_color = cv2.cvtColor(np.array([[[hsv_col, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
         color_frame = np.full((HEIGHT, WIDTH, 3), converted_color, dtype=np.uint8)
         self.send_new_frame(color_frame)
+
+    def black_out(self):
+        self.send_new_frame(NO_FRAME)
 
     def display_hsv_frame(self, hsvframe, use_interpolation=False):
         frame = hsvframe

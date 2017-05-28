@@ -3,8 +3,8 @@ from enum import Enum
 
 from State_Machine import *
 from cv.ImageProcessing import *
-from utils.Symbols import *
 from utils import Constants
+from utils.Symbols import *
 
 logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=logging.INFO)
 
@@ -78,7 +78,7 @@ class Receiver(State_Machine):
         :return: 
         """
         self.cv_handler.display_hsv_color(S_NO_ACK)
-        State_Machine.compute_screen_boundaries(self, S_ACK[0, 0, 0])
+        State_Machine.compute_screen_boundaries(self, S_ACK)
         self.cap.set_screen_boundaries(self.screen_boundaries)
 
         self.cv_handler.display_hsv_color(S_ACK)
@@ -127,7 +127,7 @@ class Receiver(State_Machine):
 
             hue_mean = np.round(hue_mean / 3.0)
             logging.info("hue mean : " + str(hue_mean))
-            SYMBOLS[i, 0, 0, 0] = np.round(hue_mean)
+            SYMBOLS[i] = np.round(hue_mean)
 
         for i in range(0, NUM_SYMBOLS):
             logging.info("symbol " + str(i) + " : " + str(SYMBOLS[i]))
@@ -151,7 +151,7 @@ class Receiver(State_Machine):
             hue_mean = State_Machine.get_hue_mean(self)
             logging.info("hue mean : " + str(hue_mean))
 
-            detected_symbol = (np.abs(SYMBOLS[:, 0, 0, 0] - hue_mean)).argmin()
+            detected_symbol = (np.abs(SYMBOLS[:] - hue_mean)).argmin()
             logging.info("detected symbol: " + str(detected_symbol))
 
             self.decoded_byte = (detected_symbol << NUM_BITS * i) | self.decoded_byte
@@ -177,7 +177,7 @@ class Receiver(State_Machine):
             logging.info("Sent NO ACK to transmitter")
 
         State_Machine.sleep_until_next_tick(self)
-        self.cv_handler.display_hsv_color(S_VOID)
+        self.cv_handler.black_out()
         self.state = State.RECEIVE
 
         if len(self.decoded_sequence) % 10 == 0:

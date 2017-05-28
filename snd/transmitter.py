@@ -75,7 +75,7 @@ class Transmitter(State_Machine):
         """
 
         self.cv_handler.display_hsv_color(S_NO_ACK)
-        State_Machine.compute_screen_boundaries(self, S_NO_ACK[0, 0, 0])
+        State_Machine.compute_screen_boundaries(self, S_NO_ACK)
         self.cap.set_screen_boundaries(self.screen_boundaries)
 
         # Calibrate no acks
@@ -120,7 +120,7 @@ class Transmitter(State_Machine):
                 self.receiver_ack = True
 
                 # Screen goes black, meaning that at next epoch second, receiver clock fires up and get in sync
-                self.cv_handler.display_hsv_color(S_VOID)
+                self.cv_handler.black_out()
                 self.state = State.CALIBRATE
                 State_Machine.sleep_until_next_tick(self)
                 logging.info("Transmitter finished the synchronization phase")
@@ -174,7 +174,7 @@ class Transmitter(State_Machine):
 
     def do_get_ack(self):
 
-        self.cv_handler.display_hsv_color(S_VOID)
+        self.cv_handler.black_out()
 
         # wait one tick for receiver ack
         State_Machine.sleep_until_next_tick(self)
@@ -205,7 +205,7 @@ class Transmitter(State_Machine):
 
         hue_mean = np.round(hue_mean / 3.0)
         logging.info("hue mean for no ack calibration was: " + str(hue_mean))
-        S_NO_ACK[0, 0, 0] = np.round(hue_mean)
+        S_NO_ACK = np.round(hue_mean)
 
     def _calibrate_acks(self):
         hue_mean = 0.0
@@ -216,7 +216,7 @@ class Transmitter(State_Machine):
 
         hue_mean = np.round(hue_mean / 3.0)
         logging.info("hue mean for ack calibration was: " + str(hue_mean))
-        S_ACK[0, 0, 0] = np.round(hue_mean)
+        S_ACK = np.round(hue_mean)
 
     def _load_file(self, file_name):
 

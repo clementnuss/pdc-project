@@ -1,14 +1,14 @@
+import logging
 import threading
 from time import sleep
-from typing import Tuple
 
 import cv2
-import logging
 import numpy as np
 import scipy.misc as scm
+from typing import Tuple
 
 from cv import CV_GUI_Handler, CV_Video_Capture_Handler
-from cv.CV_GUI_Handler import OpenCvHandler
+from cv.CV_GUI_Handler import OpenCvHandler, NO_FRAME
 from cv.ImageProcessing import crop
 from rcvr import receiver
 from snd import transmitter
@@ -78,9 +78,12 @@ class SimulationHandler:
 
         def display_hsv_color(self, hsv_col):
             """Converts the given color from HSV to BGR, and displays it"""
-            converted_color = cv2.cvtColor(hsv_col, cv2.COLOR_HSV2BGR)
+            converted_color = cv2.cvtColor(np.array([[[hsv_col, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
             color_frame = np.full((CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH, 3), converted_color, dtype=np.uint8)
             self.send_new_frame(color_frame)
+
+        def black_out(self):
+            self.send_new_frame(NO_FRAME)
 
         def display_hsv_frame(self, hsvframe):
             resized_frame = scm.imresize(hsvframe, (Constants.WIDTH, Constants.HEIGHT), interp='bilinear')
@@ -127,9 +130,12 @@ class SimulationHandler:
 
         def display_hsv_color(self, hsv_col):
             """Converts the given color from HSV to BGR, and displays it"""
-            converted_color = cv2.cvtColor(hsv_col, cv2.COLOR_HSV2BGR)
+            converted_color = cv2.cvtColor(np.array([[[hsv_col, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
             color_frame = np.full((CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH, 3), converted_color, dtype=np.uint8)
             self.send_new_frame(color_frame)
+
+        def black_out(self):
+            self.send_new_frame(NO_FRAME)
 
         def display_hsv_frame(self, hsvframe):
             resized_frame = scm.imresize(hsvframe, (Constants.WIDTH, Constants.HEIGHT), interp='bilinear')
