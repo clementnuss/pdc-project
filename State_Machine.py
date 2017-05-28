@@ -5,7 +5,7 @@ import time
 import cv.CV_GUI_Handler
 import cv.CV_Video_Capture_Handler
 from cv.ImageProcessing import *
-from utils.Constants import *
+from utils import Constants
 from utils.Symbols import *
 
 
@@ -21,7 +21,7 @@ class State_Machine(object):
         self.tick_count = 0
         self.log_count = 0
 
-        if USE_MASK:
+        if Constants.USE_MASK:
             self.SYMBOL_ZERO_MASK = np.full((HEIGHT, WIDTH, 3), fill_value=S_ZERO, dtype=np.uint8)
             self.SYMBOL_ONE_MASK = np.full((HEIGHT, WIDTH, 3), fill_value=S_ONE, dtype=np.uint8)
             self.ACK_MASK = self.SYMBOL_ONE_MASK
@@ -36,7 +36,7 @@ class State_Machine(object):
             self.NO_ACK_REF = None
             self.VOID_REF = None
 
-        if SIMULATE:
+        if Constants.SIMULATE:
             self.cv_handler = None
             self.cap = None
         else:
@@ -63,7 +63,7 @@ class State_Machine(object):
             else:
                 prev_mask = mask
 
-            if not SIMULATE:
+            if not Constants.SIMULATE:
                 self.cv_handler.display_hsv_frame(
                     superimpose(self.NO_ACK_MASK, np.uint8(mask[::10, ::10])[..., np.newaxis]))
             time.sleep(0.2)
@@ -135,6 +135,7 @@ class State_Machine(object):
                     cntmin_y = np.min(cnt[:, 0, 1])
                     cntmax_y = np.max(cnt[:, 0, 1])
 
+                    from utils.Constants import DETECTION_PROPORTION
                     if (cntmin_x < WIDTH / DETECTION_PROPORTION or
                                 cntmin_y < HEIGHT / DETECTION_PROPORTION or
                                 cntmax_x > (WIDTH - WIDTH / DETECTION_PROPORTION) or

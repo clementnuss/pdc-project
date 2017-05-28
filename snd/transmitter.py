@@ -3,6 +3,7 @@ from enum import Enum
 
 from State_Machine import *
 from utils.Symbols import *
+from utils import Constants
 
 logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=logging.INFO)
 
@@ -27,7 +28,7 @@ class Transmitter(State_Machine):
         self.last_byte_sent = None
         self.receiver_ack = True
 
-        if SIMULATE:
+        if Constants.SIMULATE:
             simulation_handler = Constants.SIMULATION_HANDLER
             self.cv_handler = simulation_handler.tmtr
             self.cap = simulation_handler.tmtr

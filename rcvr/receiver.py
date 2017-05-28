@@ -4,6 +4,7 @@ from enum import Enum
 from State_Machine import *
 from cv.ImageProcessing import *
 from utils.Symbols import *
+from utils import Constants
 
 logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=logging.INFO)
 
@@ -38,8 +39,8 @@ class Receiver(State_Machine):
         self.bitCount = 0
         self.screen_mask = None
 
-        if SIMULATE:
-            simulation_handler = SIMULATION_HANDLER
+        if Constants.SIMULATE:
+            simulation_handler = Constants.SIMULATION_HANDLER
             self.cv_handler = simulation_handler.rcvr
             self.cap = simulation_handler.rcvr
 
@@ -119,8 +120,7 @@ class Receiver(State_Machine):
         for i in range(0, NUM_SYMBOLS):
             hue_mean = 0.0
 
-            for x in range(0,3):
-
+            for x in range(0, 3):
                 hue_mean += State_Machine.get_hue_mean(self)
 
                 State_Machine.sleep_until_next_tick(self)
