@@ -100,13 +100,13 @@ class State_Machine(object):
             delta_coeff = smooth_step(iteration, min_iteration, max_iteration)
             iteration = iteration + 1
 
-            min_hsv = (hue_target - hue_delta_coeff * max_delta_hue,
-                       saturation_target - delta_coeff * max_delta_saturation,
-                       value_target - delta_coeff * max_delta_value)
+            min_hsv = np.array([np.uint8(hue_target - hue_delta_coeff * max_delta_hue),
+                       np.uint8(saturation_target - delta_coeff * max_delta_saturation),
+                       np.uint8(value_target - delta_coeff * max_delta_value)])
 
-            max_hsv = (hue_target + hue_delta_coeff * max_delta_hue,
-                       saturation_target,
-                       value_target)
+            max_hsv = np.array([np.uint8(hue_target + hue_delta_coeff * max_delta_hue),
+                       np.uint8(saturation_target),
+                       np.uint8(value_target)])
 
             logging.info("Iteration with min: " + str(min_hsv) + " and max: " + str(max_hsv))
 
@@ -136,6 +136,8 @@ class State_Machine(object):
                     cntmax_y = np.max(cnt[:, 0, 1])
 
                     from utils.Constants import DETECTION_PROPORTION
+                    if Constants.SIMULATE:
+                        DETECTION_PROPORTION = 200
                     if (cntmin_x < WIDTH / DETECTION_PROPORTION or
                                 cntmin_y < HEIGHT / DETECTION_PROPORTION or
                                 cntmax_x > (WIDTH - WIDTH / DETECTION_PROPORTION) or
@@ -143,8 +145,8 @@ class State_Machine(object):
                         print("Skipping contour, out of bounds")
                         continue
 
-                    print(area)
-                    if 30000 > area > 40 and cv2.isContourConvex(cnt):
+                    print("Contour area: " + str(area))
+                    if 30000 > area > 30 if Constants.SIMULATE else 40 and cv2.isContourConvex(cnt):
                         if area > max_area:
                             max_area = area
                             most_beautiful_contour = cnt
@@ -235,15 +237,15 @@ class State_Machine(object):
         return frame[:, :, i].mean()
 
     def compute_hue_mean(self, frame) -> np.float64:
-        return self._compute_mean(self,frame, 0)
+        return self._compute_mean(self, frame, 0)
 
     def compute_saturation_mean(self, frame) -> np.float64:
-        return self._compute_mean(self,frame, 1)
+        return self._compute_mean(self, frame, 1)
 
     def compute_value_mean(self, frame) -> np.float64:
-        return self._compute_mean(self,frame, 2)
+        return self._compute_mean(self, frame, 2)
 
-    def _compute_mean(self, frame,  i):
+    def _compute_mean(self, frame, i):
         return frame[:, :, i].mean()
 
     def _align_clock(self):
@@ -257,7 +259,6 @@ class State_Machine(object):
         to_sleep = math.floor(curr_time + 1.0) - curr_time
         logging.info(curr_time)
         time.sleep(to_sleep)
-
 
     def sleep_until_next_tick(self):
         self.tick_count = self.tick_count + 1

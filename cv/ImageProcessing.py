@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-ERODE_KERNEL_SIZE = 7
+ERODE_KERNEL_SIZE = 5
 
 
 def smooth_step(x, edge0, edge1):

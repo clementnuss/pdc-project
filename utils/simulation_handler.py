@@ -114,8 +114,8 @@ class SimulationHandler:
             self.frame = simulate_camera(
                 np.full((CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH, 3), (0, 0, 14), dtype=np.uint8))
 
-            self.screen_boundaries = (0, CV_Video_Capture_Handler.CV_Video_Capture_Handler.HEIGHT,
-                                      0, CV_Video_Capture_Handler.CV_Video_Capture_Handler.WIDTH)
+            self.screen_boundaries = (0, CV_Video_Capture_Handler.CV_Video_Capture_Handler.WIDTH,
+                                      0, CV_Video_Capture_Handler.CV_Video_Capture_Handler.HEIGHT)
 
         def send_new_frame(self, new_frame):
             self.frame = simulate_camera(new_frame)
