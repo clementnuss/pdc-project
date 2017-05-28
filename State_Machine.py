@@ -10,7 +10,7 @@ from utils.Symbols import *
 
 
 class State_Machine(object):
-    TRANSMISSION_RATE = 1.0 / 8.0
+    TRANSMISSION_RATE = 1.0 / 0.5
     SAMPLING_OFFSET = TRANSMISSION_RATE / 2.0 - 1 / 60
     CONVERGENCE_BOUND_THRESHOLD = 15
     CONVERGENCE_THRESHOLD = 10000
@@ -100,13 +100,13 @@ class State_Machine(object):
             delta_coeff = smooth_step(iteration, min_iteration, max_iteration)
             iteration = iteration + 1
 
-            min_hsv = np.array([np.uint8(hue_target - hue_delta_coeff * max_delta_hue),
-                       np.uint8(saturation_target - delta_coeff * max_delta_saturation),
-                       np.uint8(value_target - delta_coeff * max_delta_value)])
+            min_hsv = np.array([u8clamp(hue_target - hue_delta_coeff * max_delta_hue),
+                                u8clamp(saturation_target - delta_coeff * max_delta_saturation),
+                                u8clamp(value_target - delta_coeff * max_delta_value)])
 
-            max_hsv = np.array([np.uint8(hue_target + hue_delta_coeff * max_delta_hue),
-                       np.uint8(saturation_target),
-                       np.uint8(value_target)])
+            max_hsv = np.array([u8clamp(hue_target + hue_delta_coeff * max_delta_hue),
+                                u8clamp(saturation_target),
+                                u8clamp(value_target)])
 
             logging.info("Iteration with min: " + str(min_hsv) + " and max: " + str(max_hsv))
 
@@ -200,9 +200,9 @@ class State_Machine(object):
 
     def get_ack_scores(self):
         hue_mean = self.get_hue_mean()
-
-        ack_score = compute_cyclic_score(hue_mean, S_ACK[0, 0, 0])
-        no_ack_score = compute_cyclic_score(hue_mean, S_NO_ACK[0, 0, 0])
+        logging.info("Hue mean for ack score computation is: " + str(hue_mean))
+        ack_score = compute_cyclic_score(hue_mean, np.float64(S_ACK[0, 0, 0]))
+        no_ack_score = compute_cyclic_score(hue_mean, np.float64(S_NO_ACK[0, 0, 0]))
 
         return ack_score, no_ack_score
 

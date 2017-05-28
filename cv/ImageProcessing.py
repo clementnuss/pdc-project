@@ -4,6 +4,10 @@ import numpy as np
 ERODE_KERNEL_SIZE = 5
 
 
+def u8clamp(x) -> np.uint8:
+    return np.uint8(max(0, min(255, x)))
+
+
 def smooth_step(x, edge0, edge1):
     t = np.clip((x - edge0) / (edge1 - edge0), 0.0, 1.0);
     return t * t * (3.0 - 2.0 * t);
@@ -32,7 +36,7 @@ def compute_score(masked_frame, color_ref):
     return np.sum(diff)
 
 
-def compute_cyclic_score(value: np.uint8, reference_value: np.uint8) -> int:
+def compute_cyclic_score(value: np.float64, reference_value: np.float64) -> int:
     """
     Intended to be used with mean values instead of whole frames
     
@@ -40,10 +44,10 @@ def compute_cyclic_score(value: np.uint8, reference_value: np.uint8) -> int:
     :param reference_value: 
     :return: 
     """
-    delta = 90 - reference_value
+    delta = np.float64(90) - reference_value
 
-    adjusted_value = (np.int32(value) + delta) % 180
-    diff = adjusted_value - 90
+    adjusted_value = (value + delta) % np.float64(180)
+    diff = adjusted_value - np.float64(90)
     return diff * diff
 
 def superimpose(big_frame, small_frame):
@@ -60,5 +64,5 @@ def crop(frame, boundaries):
     return frame[boundaries[2]:boundaries[3] + 1, boundaries[0]:boundaries[1] + 1, :]
 
 if __name__ == '__main__':
-    print(2 % 180)
+    print(np.float64(180.1) % np.float64(180))
     print(compute_cyclic_score(np.uint8(170), np.uint8(0)))
