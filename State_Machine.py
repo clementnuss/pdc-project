@@ -1,6 +1,5 @@
 import logging
 import math
-import random
 import time
 
 import cv.CV_GUI_Handler
@@ -148,7 +147,7 @@ class State_Machine(object):
                         continue
 
                     print("Contour area: " + str(area))
-                    if 30000 > area > (30 if Constants.SIMULATE else 1000) and cv2.isContourConvex(cnt):
+                    if 30000 > area > (30 if Constants.SIMULATE else 400) and cv2.isContourConvex(cnt):
                         if area > max_area:
                             max_area = area
                             most_beautiful_contour = cnt
