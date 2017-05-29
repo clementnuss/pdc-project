@@ -20,6 +20,7 @@ class State_Machine(object):
         self.clock_start = -1
         self.tick_count = 0
         self.log_count = 0
+        self.capture_count = 0
 
         if Constants.USE_MASK:
             self.SYMBOL_ZERO_MASK = np.full((HEIGHT, WIDTH, 3), fill_value=S_ZERO, dtype=np.uint8)
@@ -234,6 +235,12 @@ class State_Machine(object):
 
     def _get_mean(self, i):
         ret, frame = self.cap.readHSVFrame()
+
+        if Constants.DEBUG:
+            cvtframe = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
+            cv2.imwrite("capture" + str(self.capture_count) + ".jpg", cvtframe)
+            self.capture_count = self.capture_count + 1
+
         return frame[:, :, i].mean()
 
     def compute_hue_mean(self, frame) -> np.float64:

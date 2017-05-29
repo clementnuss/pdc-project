@@ -81,6 +81,8 @@ class Transmitter(State_Machine):
         State_Machine.compute_screen_boundaries(self, S_NO_ACK)
         self.cap.set_screen_boundaries(self.screen_boundaries)
 
+        time.sleep(0.2)
+
         # Calibrate no acks
         self._calibrate_noacks()
 
@@ -200,7 +202,7 @@ class Transmitter(State_Machine):
         self.cv_handler.black_out()
 
         # wait one tick for receiver ack
-        time.sleep(State_Machine.TRANSMISSION_RATE / 2.0)
+        time.sleep(State_Machine.TRANSMISSION_RATE / 2.0 + State_Machine.SAMPLING_OFFSET)
 
         ack_score, no_ack_score = State_Machine.get_ack_scores(self)
 
