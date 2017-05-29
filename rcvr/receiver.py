@@ -155,8 +155,12 @@ class Receiver(State_Machine):
             detected_symbol = (np.abs(SYMBOLS[:] - hue_mean)).argmin()
             logging.info("detected symbol: " + str(detected_symbol))
 
-            if i == 15:
+            if i == 31:
                 self.cv_handler.display_hsv_color(60)
+            if i == 30:
+                self.cv_handler.display_hsv_color(90)
+            if i == 29:
+                self.cv_handler.display_hsv_color(160)
 
             if num_unset_bits >= NUM_BITS:
                 processed_b |= detected_symbol << num_unset_bits - NUM_BITS

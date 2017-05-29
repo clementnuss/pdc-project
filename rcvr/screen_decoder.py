@@ -1,15 +1,14 @@
 import time
 
 import cv2
-import numpy as np
 
-import cv.CV_Video_Capture_Handler
+import cv.CV_GUI_Handler
 from utils.Constants import *
 
 TRACKBAR_WINDOW = 'trackbars'
 
 cap = cv.CV_Video_Capture_Handler.CV_Video_Capture_Handler()
-
+cv_handler = cv.CV_GUI_Handler.OpenCvHandler()
 
 def nothing(val):
     return
@@ -223,7 +222,7 @@ def pass_through():
     frame_count = 0
     while 1:
         last_frame_time = time.time()
-        ret, frame = cap.readFrame()
+        ret, frame = cap.readHSVFrame()
         frame_time = time.time()
 
         frame_count = frame_count + 1
@@ -233,12 +232,12 @@ def pass_through():
             print("fps: ", fps)
             frame_count = 0
 
-        cv_handler.send_new_frame(frame)
+        cv_handler.display_hsv_frame(frame)
 
 
 if __name__ == '__main__':
     time.sleep(0.5)
-    # pass_through()
+    pass_through()
     initialize_gui()
     main_contour()
 

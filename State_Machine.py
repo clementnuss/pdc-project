@@ -10,7 +10,7 @@ from utils.Symbols import *
 
 
 class State_Machine(object):
-    TRANSMISSION_RATE = 1.0 / 8.0
+    TRANSMISSION_RATE = 1.0 / 10.0
     SAMPLING_OFFSET = 1 / 30.0
     CONVERGENCE_BOUND_THRESHOLD = 15
     CONVERGENCE_THRESHOLD = 10000

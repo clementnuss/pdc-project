@@ -200,9 +200,17 @@ class Transmitter(State_Machine):
     def do_get_ack(self):
 
         self.cv_handler.black_out()
+        current_time = time.time();
+        logging.info("ack wait time is: " + str(current_time))
 
-        # wait one tick for receiver ack
-        time.sleep(State_Machine.TRANSMISSION_RATE / 2.0 + State_Machine.SAMPLING_OFFSET)
+        # wait several tick for receiver ack to account for camera delay
+        self.sleep_until_next_tick()
+        self.sleep_until_next_tick()
+        self.sleep_until_next_tick()
+        time.sleep(State_Machine.TRANSMISSION_RATE / 2.0)
+
+        current_time = time.time()
+        logging.info("ack wait wakeup time is: " + str(current_time))
 
         ack_score, no_ack_score = State_Machine.get_ack_scores(self)
 
