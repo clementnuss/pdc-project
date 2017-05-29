@@ -162,6 +162,13 @@ class Receiver(State_Machine):
             if i == 29:
                 self.cv_handler.display_hsv_color(160)
 
+            if i == 28:
+                self.cv_handler.display_hsv_color(30)
+            if i == 29:
+                self.cv_handler.display_hsv_color(55)
+            if i == 30:
+                self.cv_handler.display_hsv_color(0)
+
             if num_unset_bits >= NUM_BITS:
                 processed_b |= detected_symbol << num_unset_bits - NUM_BITS
                 num_unset_bits -= NUM_BITS
@@ -201,6 +208,9 @@ class Receiver(State_Machine):
             self.cv_handler.display_hsv_color(S_NO_ACK)
             logging.info("Sent NO ACK to transmitter")
 
+        State_Machine.sleep_until_next_tick(self)
+        State_Machine.sleep_until_next_tick(self)
+        State_Machine.sleep_until_next_tick(self)
         State_Machine.sleep_until_next_tick(self)
         State_Machine.sleep_until_next_tick(self)
         self.state = State.RECEIVE

@@ -163,10 +163,9 @@ class Transmitter(State_Machine):
         rs_encoded_cnt = 0
 
         num_bits_to_send = 0
-        num_symbols = 8 * Constants.RS_codeword_size / 3
         processed_b = 0
 
-        for i in range(0, int(np.ceil(num_symbols))):
+        for i in range(0, Constants.num_symbols):
             if num_bits_to_send < NUM_BITS:
                 # We first shift the unsent bits to the left in order to leave 8 bits free, and we add the next
                 # data byte to the right of processed_b
@@ -238,7 +237,7 @@ class Transmitter(State_Machine):
 
         hue_mean = np.round(hue_mean / 3.0)
         logging.info("hue mean for no ack calibration was: " + str(hue_mean))
-        S_NO_ACK = np.round(hue_mean)
+        Constants.S_NO_ACK = np.round(hue_mean)
 
     def _calibrate_acks(self):
         hue_mean = 0.0
@@ -249,7 +248,7 @@ class Transmitter(State_Machine):
 
         hue_mean = np.round(hue_mean / 3.0)
         logging.info("hue mean for ack calibration was: " + str(hue_mean))
-        S_ACK = np.round(hue_mean)
+        Constants.S_ACK = np.round(hue_mean)
 
     def _load_file(self, file_name):
 
