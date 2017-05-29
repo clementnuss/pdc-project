@@ -200,7 +200,7 @@ class Transmitter(State_Machine):
         self.cv_handler.black_out()
 
         # wait one tick for receiver ack
-        State_Machine.sleep_until_next_tick(self)
+        time.sleep(State_Machine.TRANSMISSION_RATE / 2.0)
 
         ack_score, no_ack_score = State_Machine.get_ack_scores(self)
 

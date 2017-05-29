@@ -2,6 +2,7 @@ import collections
 from enum import Enum
 
 import unireedsolomon
+from unireedsolomon import RSCodecError
 
 from State_Machine import *
 from cv.ImageProcessing import *
@@ -113,7 +114,7 @@ class Receiver(State_Machine):
             self.clock_start = current_time + State_Machine.SAMPLING_OFFSET
 
             self.state = State.CALIBRATE
-            self.cv_handler.display_hsv_color(S_VOID)
+            self.cv_handler.black_out()
             logging.info("Clock start is: " + str(self.clock_start) + " Time is " + str(current_time))
             logging.info("Receiver finished the synchronization phase")
             State_Machine.sleep_until_next_tick(self)
@@ -173,12 +174,16 @@ class Receiver(State_Machine):
         pass
 
     def do_validate_data(self):
-        data_is_valid = self.rs_coder.check(self.data_packet)
+        global msg
+        data_is_valid = True
+        try:
+            msg, ecc = self.rs_coder.decode(self.data_packet, return_string=False)
+        except RSCodecError:
+            data_is_valid = False
 
         if data_is_valid:
             self.decoded_packet_count = self.decoded_packet_count + 1
             self.cv_handler.display_hsv_color(S_ACK)
-            msg, ecc = self.rs_coder.decode(self.data_packet, return_string=False)
             for b in msg:
                 self.decoded_sequence.append(b)
             logging.info("Received message : " + ''.join([chr(b) for b in msg]))
@@ -193,11 +198,6 @@ class Receiver(State_Machine):
 
         if self.decoded_packet_count % 5 == 0:
             logging.info("So far, received: " + ''.join([chr(b) for b in self.decoded_sequence]))
-
-        State_Machine.sleep_until_next_tick(self)
-
-    def _compute_checksum(self):
-        return True
 
 
 def main():
