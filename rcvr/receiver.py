@@ -146,6 +146,7 @@ class Receiver(State_Machine):
         num_unset_bits = 8
         byte_idx = 0
         self.data_packet = np.empty(12, np.uint8)
+        self.cv_handler.display_hsv_color(140)
 
         for i in range(0, Constants.num_symbols):
             hue_mean = State_Machine.get_hue_mean(self)
@@ -153,6 +154,9 @@ class Receiver(State_Machine):
 
             detected_symbol = (np.abs(SYMBOLS[:] - hue_mean)).argmin()
             logging.info("detected symbol: " + str(detected_symbol))
+
+            if i == 15:
+                self.cv_handler.display_hsv_color(60)
 
             if num_unset_bits >= NUM_BITS:
                 processed_b |= detected_symbol << num_unset_bits - NUM_BITS
@@ -165,7 +169,8 @@ class Receiver(State_Machine):
                 processed_b = (detected_symbol & (2 ** bit_shift - 1)) << 8 - bit_shift
                 num_unset_bits = 8 - (NUM_BITS - num_unset_bits)
 
-            State_Machine.sleep_until_next_tick(self)
+            if not i == Constants.num_symbols - 1:
+                State_Machine.sleep_until_next_tick(self)
 
         self.data_packet[byte_idx] = processed_b
         self.state = State.VALIDATE_DATA
@@ -193,7 +198,7 @@ class Receiver(State_Machine):
             logging.info("Sent NO ACK to transmitter")
 
         State_Machine.sleep_until_next_tick(self)
-        self.cv_handler.black_out()
+        State_Machine.sleep_until_next_tick(self)
         self.state = State.RECEIVE
 
         if self.decoded_packet_count % 5 == 0:
