@@ -108,7 +108,7 @@ class Receiver(State_Machine):
 
         # Transmitter screen has blacked out
         value_mean = self.get_value_mean()
-        logging.info("value mean: " + str(value_mean))
+        # logging.info("value mean: " + str(value_mean))
         if value_mean < 80:
             current_time = time.time()
             self.clock_start = current_time + State_Machine.SAMPLING_OFFSET
@@ -125,7 +125,8 @@ class Receiver(State_Machine):
             hue_mean = 0.0
 
             for x in range(0, 3):
-                hue_mean += State_Machine.get_hue_mean(self)
+                # hue_mean += State_Machine.get_hue_mean(self)
+                hue_mean += State_Machine.get_cyclic_hue_mean_to_reference(self, SYMBOLS[i])
 
                 State_Machine.sleep_until_next_tick(self)
 
@@ -148,11 +149,18 @@ class Receiver(State_Machine):
         self.data_packet = np.empty(12, np.uint8)
         self.cv_handler.display_hsv_color(140)
 
-        for i in range(0, Constants.num_symbols):
-            hue_mean = State_Machine.get_hue_mean(self)
-            logging.info("hue mean : " + str(hue_mean))
+        for i in range(0, Constants.num_symbols_per_data_packet):
+            # hue_mean = State_Machine.get_hue_mean(self)
+            # logging.info("hue mean : " + str(hue_mean))
 
-            detected_symbol = (np.abs(SYMBOLS[:] - hue_mean)).argmin()
+            ret, frame = self.cap.readHSVFrame()
+
+            detected_symbol = np.array(
+                [State_Machine.compute_cyclic_hue_frame_score(self, frame[:, :, 0], SYMBOLS[s])
+                 for s in range(0, NUM_SYMBOLS)
+                 ]
+            ).argmin()
+
             logging.info("detected symbol: " + str(detected_symbol))
 
             if i == 31:
@@ -180,7 +188,7 @@ class Receiver(State_Machine):
                 processed_b = (detected_symbol & (2 ** bit_shift - 1)) << 8 - bit_shift
                 num_unset_bits = 8 - (NUM_BITS - num_unset_bits)
 
-            if not i == Constants.num_symbols - 1:
+            if not i == Constants.num_symbols_per_data_packet - 1:
                 State_Machine.sleep_until_next_tick(self)
 
         self.data_packet[byte_idx] = processed_b

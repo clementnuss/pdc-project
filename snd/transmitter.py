@@ -165,7 +165,7 @@ class Transmitter(State_Machine):
         num_bits_to_send = 0
         processed_b = 0
 
-        for i in range(0, Constants.num_symbols):
+        for i in range(0, Constants.num_symbols_per_data_packet):
             if num_bits_to_send < NUM_BITS:
                 # We first shift the unsent bits to the left in order to leave 8 bits free, and we add the next
                 # data byte to the right of processed_b

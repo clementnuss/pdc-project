@@ -17,6 +17,8 @@ from utils import Constants
 
 def simulate_camera(frame):
     scaled_frame = frame[::10, ::10]
+    scaled_frame = np.uint8(np.clip(scaled_frame, (0, 0, 0), (255, 255, 255)))
+
     from utils.Constants import WIDTH, HEIGHT
     camera_frame = np.full((HEIGHT, WIDTH, 3), (0, 0, 0), dtype=np.uint8)
     if len(scaled_frame.shape) == 2:

@@ -1,5 +1,6 @@
 import logging
 import math
+import random
 import time
 
 import cv.CV_GUI_Handler
@@ -245,6 +246,26 @@ class State_Machine(object):
 
     def compute_hue_mean(self, frame) -> np.float64:
         return self._compute_mean(self, frame, 0)
+
+    def get_cyclic_hue_mean_to_reference(self, ref):
+        ret, frame = self.cap.readHSVFrame()
+
+        frame = frame + random.randint(-20, -15)
+
+        delta = 90 - ref
+
+        adjusted_frame = (np.int32(frame[:, :, 0]) + delta) % 180
+
+        return np.float64(adjusted_frame.mean() - 90 + ref) % np.float64(180)
+
+    def compute_cyclic_hue_frame_score(self, frame, reference_value: np.float64) -> int:
+
+        delta = np.float64(90) - reference_value
+
+        adjusted_frame = (np.float64(frame) + delta) % np.float64(180)
+        diff = np.sum(adjusted_frame - np.float64(90))
+
+        return diff * diff
 
     def compute_saturation_mean(self, frame) -> np.float64:
         return self._compute_mean(self, frame, 1)
