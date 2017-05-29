@@ -41,8 +41,8 @@ class CV_Video_Capture_Handler:
             self.screen_boundaries2 = (0, CV_Video_Capture_Handler.WIDTH, 0, CV_Video_Capture_Handler.HEIGHT)
 
             self.process = threading.Thread(target=
-                                            self._frame_continuous_poll if utils.Constants.USE_AKIMBO_SCREEN
-                                            else self._frame_continuous_poll_akimbo())
+                                            self._frame_continuous_poll_akimbo if utils.Constants.USE_AKIMBO_SCREEN
+                                            else self._frame_continuous_poll)
 
             self.process.setDaemon(True)
             self.process.start()

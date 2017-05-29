@@ -222,7 +222,7 @@ def main_contour():
                 d1, d2, d3, d4 = abs(newmin_x - min_x2), abs(newmin_y - min_y2), abs(newmax_x - max_x2), abs(
                     newmax_y - max_y2)
 
-                if [d1, d2, d3, d4] < [20] * 4:
+                if [d1, d2, d3, d4] < [10] * 4:
                     if not manual:
                         contour2_converged = True
                     cv2.rectangle(frame, (min_x2, min_y2), (max_x2, max_y2), (0, 0, 255), thickness=2)
@@ -232,7 +232,7 @@ def main_contour():
                     print("Contour 2 Not converged yet")
                     contour2_converged = False
 
-                    min_x2, max_x2, min_y2, max_y2 = newmin_x + 1, newmax_x, newmin_y + 1, newmax_y
+                min_x2, max_x2, min_y2, max_y2 = newmin_x + 1, newmax_x, newmin_y + 1, newmax_y
 
             if contour1_converged and max_area1 >= 2.0 * typical_small_countour_size:
                 converged = True

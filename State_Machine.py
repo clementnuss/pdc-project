@@ -31,6 +31,10 @@ class State_Machine(object):
             self.screen_mask = None
         else:
             self.screen_boundaries = None
+
+            # Used for akimbo mode
+            self.screen_boundaries1 = None
+            self.screen_boundaries2 = None
             self.SYMBOL_ZERO_REF = None
             self.SYMBOL_ONE_REF = None
             self.ACK_REF = None
@@ -131,10 +135,7 @@ class State_Machine(object):
                 for cnt in contours:
                     area = cv2.contourArea(cnt, oriented=False)
 
-                    cntmin_x = np.min(cnt[:, 0, 0])
-                    cntmax_x = np.max(cnt[:, 0, 0])
-                    cntmin_y = np.min(cnt[:, 0, 1])
-                    cntmax_y = np.max(cnt[:, 0, 1])
+                    cntmin_x, cntmax_x, cntmin_y, cntmax_y = self._get_contour_bounds(cnt)
 
                     from utils.Constants import DETECTION_PROPORTION
                     if Constants.SIMULATE:
@@ -157,27 +158,19 @@ class State_Machine(object):
                     # self.cv_handler.display_hsv_frame(frame)
 
                     # Extract interesting portion of image
-                    newmin_x = np.min(most_beautiful_contour[:, 0, 0])
-                    newmax_x = np.max(most_beautiful_contour[:, 0, 0])
-                    newmin_y = np.min(most_beautiful_contour[:, 0, 1])
-                    newmax_y = np.max(most_beautiful_contour[:, 0, 1])
+                    newmin_x, newmax_x, newmin_y, newmax_y = self._get_contour_bounds(most_beautiful_contour)
 
-                    d1 = abs(newmin_x - min_x)
-                    d2 = abs(newmin_y - min_y)
-                    d3 = abs(newmax_x - max_x)
-                    d4 = abs(newmax_y - max_y)
+                    d1, d2, d3, d4 = abs(newmin_x - min_x), abs(newmin_y - min_y), abs(newmax_x - max_x), abs(
+                        newmax_y - max_y)
 
                     if [d1, d2, d3, d4] < [State_Machine.CONVERGENCE_BOUND_THRESHOLD] * 4:
                         converged = True
                         cv2.rectangle(frame, (min_x, min_y), (max_x, max_y), (0, 255, 0), thickness=2)
                         cv2.imwrite("../captured.jpg", frame)
 
-                    min_x = newmin_x + 1
-                    max_x = newmax_x
-                    min_y = newmin_y + 1
-                    max_y = newmax_y
+                    min_x, max_x, min_y, max_y = newmin_x + 1, newmax_x, newmin_y + 1, newmax_y
 
-        self.screen_boundaries1 = (min_x, max_x, min_y, max_y)
+        self.screen_boundaries = (min_x, max_x, min_y, max_y)
 
     def compute_akimbo_screen_boundaries(self, color_target):
         hue_target = color_target
@@ -241,7 +234,7 @@ class State_Machine(object):
                 for cnt in contours:
                     area = cv2.contourArea(cnt, oriented=False)
 
-                    cntmin_x, cntmax_x, cntmin_y, cntmax_y = _get_contour_bounds(cnt)
+                    cntmin_x, cntmax_x, cntmin_y, cntmax_y = self._get_contour_bounds(cnt)
 
                     from utils.Constants import DETECTION_PROPORTION
                     if Constants.SIMULATE:
@@ -268,14 +261,13 @@ class State_Machine(object):
                     cv2.drawContours(frame, [best_contour1], -1, (255, 255, 255), thickness=2)
                     cv2.imshow('contoured frame', frame)
 
-                    newmin_x, newmax_x, newmin_y, newmax_y = self_get_contour_bounds(best_contour1)
+                    newmin_x, newmax_x, newmin_y, newmax_y = self._get_contour_bounds(best_contour1)
 
                     d1, d2, d3, d4 = abs(newmin_x - min_x1), abs(newmin_y - min_y1), abs(newmax_x - max_x1), abs(
                         newmax_y - max_y1)
 
-                    if [d1, d2, d3, d4] < [20] * 4:
-                        if not manual:
-                            contour1_converged = True
+                    if [d1, d2, d3, d4] < [State_Machine.CONVERGENCE_BOUND_THRESHOLD] * 4:
+                        contour1_converged = True
                         cv2.rectangle(frame, (min_x1, min_y1), (max_x1, max_y1), (0, 255, 0), thickness=2)
                         cv2.imwrite('../contour1.jpg', frame)
                         print("Contour 1 converged")
@@ -294,9 +286,8 @@ class State_Machine(object):
                     d1, d2, d3, d4 = abs(newmin_x - min_x2), abs(newmin_y - min_y2), abs(newmax_x - max_x2), abs(
                         newmax_y - max_y2)
 
-                    if [d1, d2, d3, d4] < [20] * 4:
-                        if not manual:
-                            contour2_converged = True
+                    if [d1, d2, d3, d4] < [State_Machine.CONVERGENCE_BOUND_THRESHOLD] * 4:
+                        contour2_converged = True
                         cv2.rectangle(frame, (min_x2, min_y2), (max_x2, max_y2), (0, 0, 255), thickness=2)
                         cv2.imwrite('../contour2.jpg', frame)
                         print("Contour 2 converged")
@@ -304,7 +295,7 @@ class State_Machine(object):
                         print("Contour 2 Not converged yet")
                         contour2_converged = False
 
-                        min_x2, max_x2, min_y2, max_y2 = newmin_x + 1, newmax_x, newmin_y + 1, newmax_y
+                    min_x2, max_x2, min_y2, max_y2 = newmin_x + 1, newmax_x, newmin_y + 1, newmax_y
 
                 if contour1_converged and max_area1 >= 2.0 * typical_small_countour_size:
                     converged = True

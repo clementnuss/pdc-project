@@ -82,11 +82,12 @@ class Receiver(State_Machine):
         :return: 
         """
         self.cv_handler.display_hsv_color(S_NO_ACK)
-        State_Machine.compute_screen_boundaries(self, S_ACK)
 
         if Constants.USE_AKIMBO_SCREEN:
+            State_Machine.compute_akimbo_screen_boundaries(self, S_ACK)
             self.cap.set_akimbo_screen_boundaries(self.screen_boundaries1, self.screen_boundaries2)
         else:
+            State_Machine.compute_screen_boundaries(self, S_ACK)
             self.cap.set_screen_boundaries(self.screen_boundaries1)
 
         self.cv_handler.display_hsv_color(S_ACK)
