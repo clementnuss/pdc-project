@@ -8,6 +8,8 @@ DETECTION_PROPORTION = 4.0
 DEBUG = True
 SIMULATE = False
 USE_MASK = False
+USE_AKIMBO_SCREEN = True
+
 
 NUM_BITS = 3
 RS_codeword_size = 12

@@ -10,6 +10,7 @@ TRACKBAR_WINDOW = 'trackbars'
 cap = cv.CV_Video_Capture_Handler.CV_Video_Capture_Handler()
 cv_handler = cv.CV_GUI_Handler.OpenCvHandler()
 
+
 def nothing(val):
     return
 
@@ -92,16 +93,21 @@ def smooth_step(x, edge0, edge1):
     t = np.clip((x - edge0) / (edge1 - edge0), 0.0, 1.0);
     return t * t * (3.0 - 2.0 * t)
 
+
 def main_contour():
-    hue_target = 15
+    hue_target = 105
     saturation_target = 255
     value_target = 255
 
     max_delta_hue = 20
-    max_delta_saturation = 130
-    max_delta_value = 130
+    max_delta_saturation = 100
+    max_delta_value = 40
 
-    min_x = min_y = max_x = max_y = 0
+    min_x1 = min_y1 = max_x1 = max_y1 = 0
+    min_x2 = min_y2 = max_x2 = max_y2 = 0
+
+    delta_screen_bounds = 10
+    typical_small_countour_size = 400
 
     iteration = 0
     min_iteration = 0
@@ -110,10 +116,13 @@ def main_contour():
     manual = True
 
     converged = False
-    kernel = np.ones((7, 7), np.uint8)
+    contour1_converged = False
+    contour2_converged = False
+
+    kernel = np.ones((5, 5), np.uint8)
 
     while not converged:
-        time.sleep(0.1)
+        time.sleep(0.2)
 
         ret, frame = cap.readHSVFrame()
 
@@ -155,16 +164,15 @@ def main_contour():
             print("Got " + str(len(contours)) + " contours")
             # Filter contours
 
-            most_beautiful_contour = None
-            max_area = 0
+            best_contour1 = None
+            best_contour2 = None
+            max_area1 = 0
+            max_area2 = 0
 
             for cnt in contours:
                 area = cv2.contourArea(cnt, oriented=False)
 
-                cntmin_x = np.min(cnt[:, 0, 0])
-                cntmax_x = np.max(cnt[:, 0, 0])
-                cntmin_y = np.min(cnt[:, 0, 1])
-                cntmax_y = np.max(cnt[:, 0, 1])
+                cntmin_x, cntmax_x, cntmin_y, cntmax_y = _get_contour_bounds(cnt)
 
                 if (cntmin_x < WIDTH / DETECTION_PROPORTION or
                             cntmin_y < HEIGHT / DETECTION_PROPORTION or
@@ -175,39 +183,65 @@ def main_contour():
 
                 print(area)
 
-                if 30000 > area > 500 and cv2.isContourConvex(cnt):
-                    if area > max_area:
-                        max_area = area
-                        most_beautiful_contour = cnt
+                if 30000 > area > typical_small_countour_size and cv2.isContourConvex(cnt):
+                    if area > max_area2:
+                        if area > max_area1:
+                            max_area1 = area
+                            best_contour1 = cnt
+                        else:
+                            max_area2 = area
+                            best_contour2 = cnt
 
-            if most_beautiful_contour is not None:
-                cv2.drawContours(frame, [most_beautiful_contour], -1, (255, 255, 255), thickness=2)
+            if best_contour1 is not None:
+                cv2.drawContours(frame, [best_contour1], -1, (255, 255, 255), thickness=2)
                 cv2.imshow('contoured frame', frame)
 
-                newmin_x = np.min(most_beautiful_contour[:, 0, 0])
-                newmax_x = np.max(most_beautiful_contour[:, 0, 0])
-                newmin_y = np.min(most_beautiful_contour[:, 0, 1])
-                newmax_y = np.max(most_beautiful_contour[:, 0, 1])
+                newmin_x, newmax_x, newmin_y, newmax_y = _get_contour_bounds(best_contour1)
 
-                d1 = abs(newmin_x - min_x)
-                d2 = abs(newmin_y - min_y)
-                d3 = abs(newmax_x - max_x)
-                d4 = abs(newmax_y - max_y)
+                d1, d2, d3, d4 = abs(newmin_x - min_x1), abs(newmin_y - min_y1), abs(newmax_x - max_x1), abs(
+                    newmax_y - max_y1)
 
-                if [d1, d2, d3, d4] < [10] * 4:
+                if [d1, d2, d3, d4] < [20] * 4:
                     if not manual:
-                        converged = True
-                    cv2.rectangle(frame, (min_x, min_y), (max_x, max_y), (0, 255, 0), thickness=2)
+                        contour1_converged = True
+                    cv2.rectangle(frame, (min_x1, min_y1), (max_x1, max_y1), (0, 255, 0), thickness=2)
                     cv2.imshow('bounded frame', frame)
+                    print("Contour 1 converged")
                 else:
-                    print("Not converged yet")
+                    contour1_converged = False
+                    print("Contour 1 Not converged yet")
 
-                min_x = newmin_x + 1
-                max_x = newmax_x
-                min_y = newmin_y + 1
-                max_y = newmax_y
+                min_x1, max_x1, min_y1, max_y1 = newmin_x + 1, newmax_x, newmin_y + 1, newmax_y
 
+            if best_contour2 is not None:
+                cv2.drawContours(frame, [best_contour2], -1, (255, 255, 255), thickness=2)
+                cv2.imshow('contoured frame', frame)
 
+                newmin_x, newmax_x, newmin_y, newmax_y = _get_contour_bounds(best_contour2)
+
+                d1, d2, d3, d4 = abs(newmin_x - min_x2), abs(newmin_y - min_y2), abs(newmax_x - max_x2), abs(
+                    newmax_y - max_y2)
+
+                if [d1, d2, d3, d4] < [20] * 4:
+                    if not manual:
+                        contour2_converged = True
+                    cv2.rectangle(frame, (min_x2, min_y2), (max_x2, max_y2), (0, 0, 255), thickness=2)
+                    cv2.imshow('bounded frame', frame)
+                    print("Contour 2 converged")
+                else:
+                    print("Contour 2 Not converged yet")
+                    contour2_converged = False
+
+                    min_x2, max_x2, min_y2, max_y2 = newmin_x + 1, newmax_x, newmin_y + 1, newmax_y
+
+            if contour1_converged and max_area1 >= 2.0 * typical_small_countour_size:
+                converged = True
+                print("Screen detection converged with 1 contour")
+            elif contour1_converged and contour2_converged:
+                converged = True
+                print("Screen detection converged with 2 contours")
+            else:
+                converged = False
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -215,6 +249,16 @@ def main_contour():
     while True:
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+
+
+def _get_contour_bounds(contour):
+    return (
+        np.min(contour[:, 0, 0]),
+        np.max(contour[:, 0, 0]),
+        np.min(contour[:, 0, 1]),
+        np.max(contour[:, 0, 1])
+    )
+
 
 def pass_through():
     frame_time = 0
@@ -237,7 +281,7 @@ def pass_through():
 
 if __name__ == '__main__':
     time.sleep(0.5)
-    pass_through()
+    # pass_through()
     initialize_gui()
     main_contour()
 

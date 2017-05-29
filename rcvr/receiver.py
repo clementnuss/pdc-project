@@ -83,7 +83,11 @@ class Receiver(State_Machine):
         """
         self.cv_handler.display_hsv_color(S_NO_ACK)
         State_Machine.compute_screen_boundaries(self, S_ACK)
-        self.cap.set_screen_boundaries(self.screen_boundaries)
+
+        if Constants.USE_AKIMBO_SCREEN:
+            self.cap.set_akimbo_screen_boundaries(self.screen_boundaries1, self.screen_boundaries2)
+        else:
+            self.cap.set_screen_boundaries(self.screen_boundaries1)
 
         self.cv_handler.display_hsv_color(S_ACK)
         self.state = State.SYNC_CLOCK

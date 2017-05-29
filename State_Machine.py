@@ -177,8 +177,165 @@ class State_Machine(object):
                     min_y = newmin_y + 1
                     max_y = newmax_y
 
-        self.screen_boundaries = (min_x, max_x, min_y, max_y)
-        State_Machine._compute_references_values(self)
+        self.screen_boundaries1 = (min_x, max_x, min_y, max_y)
+
+    def compute_akimbo_screen_boundaries(self, color_target):
+        hue_target = color_target
+        saturation_target = 255
+        value_target = 255
+
+        max_delta_hue = 20
+        max_delta_saturation = 150
+        max_delta_value = 45
+
+        min_x1 = min_y1 = max_x1 = max_y1 = 0
+        min_x2 = min_y2 = max_x2 = max_y2 = 0
+
+        typical_small_countour_size = 400
+
+        iteration = 0
+        min_iteration = 0
+        max_iteration = 30
+
+        converged = False
+        contour1_converged = False
+        contour2_converged = False
+
+        while not converged:
+            time.sleep(0.2)
+            ret, frame = self.cap.readHSVFrame()
+
+            hue_delta_coeff = smooth_step(2.0 * iteration, min_iteration, max_iteration)
+            delta_coeff = smooth_step(iteration, min_iteration, max_iteration)
+            iteration = iteration + 1
+
+            min_hsv = np.array([u8clamp(hue_target - hue_delta_coeff * max_delta_hue),
+                                u8clamp(saturation_target - delta_coeff * max_delta_saturation),
+                                u8clamp(value_target - delta_coeff * max_delta_value)])
+
+            max_hsv = np.array([u8clamp(hue_target + hue_delta_coeff * max_delta_hue),
+                                u8clamp(saturation_target),
+                                u8clamp(value_target)])
+
+            logging.info("Iteration with min: " + str(min_hsv) + " and max: " + str(max_hsv))
+
+            frame_thresholded = getMask(frame, min_hsv, max_hsv)
+            # self.cv_handler.display_frame(frame_thresholded)
+            canny_frame = cv2.Canny(frame_thresholded, 50, 150, apertureSize=3)
+            contoured_frame, contours0, hierarchy = cv2.findContours(canny_frame, mode=cv2.RETR_EXTERNAL,
+                                                                     method=cv2.CHAIN_APPROX_SIMPLE)
+
+            # Approximate contour by multiple straight lines
+            contours = [cv2.approxPolyDP(cnt, 3, True) for cnt in contours0]
+
+            logging.info("Got " + str(len(contours)) + " contours")
+
+            if 10 > len(contours) > 0:
+
+                # Filter contours
+                best_contour1 = None
+                best_contour2 = None
+                max_area1 = 0
+                max_area2 = 0
+
+                for cnt in contours:
+                    area = cv2.contourArea(cnt, oriented=False)
+
+                    cntmin_x, cntmax_x, cntmin_y, cntmax_y = _get_contour_bounds(cnt)
+
+                    from utils.Constants import DETECTION_PROPORTION
+                    if Constants.SIMULATE:
+                        DETECTION_PROPORTION = 200
+                    if (cntmin_x < WIDTH / DETECTION_PROPORTION or
+                                cntmin_y < HEIGHT / DETECTION_PROPORTION or
+                                cntmax_x > (WIDTH - WIDTH / DETECTION_PROPORTION) or
+                                cntmax_y > (HEIGHT - HEIGHT / DETECTION_PROPORTION)):
+                        print("Skipping contour, out of bounds")
+                        continue
+
+                    print("Contour area: " + str(area))
+                    if 30000 > area > (
+                            typical_small_countour_size if Constants.SIMULATE else 400) and cv2.isContourConvex(cnt):
+                        if area > max_area2:
+                            if area > max_area1:
+                                max_area1 = area
+                                best_contour1 = cnt
+                            else:
+                                max_area2 = area
+                                best_contour2 = cnt
+
+                if best_contour1 is not None:
+                    cv2.drawContours(frame, [best_contour1], -1, (255, 255, 255), thickness=2)
+                    cv2.imshow('contoured frame', frame)
+
+                    newmin_x, newmax_x, newmin_y, newmax_y = self_get_contour_bounds(best_contour1)
+
+                    d1, d2, d3, d4 = abs(newmin_x - min_x1), abs(newmin_y - min_y1), abs(newmax_x - max_x1), abs(
+                        newmax_y - max_y1)
+
+                    if [d1, d2, d3, d4] < [20] * 4:
+                        if not manual:
+                            contour1_converged = True
+                        cv2.rectangle(frame, (min_x1, min_y1), (max_x1, max_y1), (0, 255, 0), thickness=2)
+                        cv2.imwrite('../contour1.jpg', frame)
+                        print("Contour 1 converged")
+                    else:
+                        contour1_converged = False
+                        print("Contour 1 Not converged yet")
+
+                    min_x1, max_x1, min_y1, max_y1 = newmin_x + 1, newmax_x, newmin_y + 1, newmax_y
+
+                if best_contour2 is not None:
+                    cv2.drawContours(frame, [best_contour2], -1, (255, 255, 255), thickness=2)
+                    cv2.imshow('contoured frame', frame)
+
+                    newmin_x, newmax_x, newmin_y, newmax_y = self._get_contour_bounds(best_contour2)
+
+                    d1, d2, d3, d4 = abs(newmin_x - min_x2), abs(newmin_y - min_y2), abs(newmax_x - max_x2), abs(
+                        newmax_y - max_y2)
+
+                    if [d1, d2, d3, d4] < [20] * 4:
+                        if not manual:
+                            contour2_converged = True
+                        cv2.rectangle(frame, (min_x2, min_y2), (max_x2, max_y2), (0, 0, 255), thickness=2)
+                        cv2.imwrite('../contour2.jpg', frame)
+                        print("Contour 2 converged")
+                    else:
+                        print("Contour 2 Not converged yet")
+                        contour2_converged = False
+
+                        min_x2, max_x2, min_y2, max_y2 = newmin_x + 1, newmax_x, newmin_y + 1, newmax_y
+
+                if contour1_converged and max_area1 >= 2.0 * typical_small_countour_size:
+                    converged = True
+                    print("Screen detection converged with 1 contour")
+                elif contour1_converged and contour2_converged:
+                    converged = True
+                    print("Screen detection converged with 2 contours")
+                else:
+                    converged = False
+
+        # Only 1 big screen
+        if not contour2_converged:
+            # TODO: split screen here also
+            self.screen_boundaries1 = (min_x1, max_x1 / 2, min_y1, max_y1)
+            self.screen_boundaries2 = None
+
+        # 2 contours in diagonal
+        elif (min_x1 + max_x1) / 2.0 < (min_x2 + max_x2) / 2.0:
+            self.screen_boundaries1 = (min_x1, max_x1, min_y1, max_y1)
+            self.screen_boundaries2 = (min_x2, max_x2, min_y2, max_y2)
+        else:
+            self.screen_boundaries2 = (min_x1, max_x1, min_y1, max_y1)
+            self.screen_boundaries1 = (min_x2, max_x2, min_y2, max_y2)
+
+    def _get_contour_bounds(self, contour):
+        return (
+            np.min(contour[:, 0, 0]),
+            np.max(contour[:, 0, 0]),
+            np.min(contour[:, 0, 1]),
+            np.max(contour[:, 0, 1])
+        )
 
     def _compute_references_values(self):
         dx = self.screen_boundaries[1] - self.screen_boundaries[0] + 1
