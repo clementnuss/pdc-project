@@ -26,11 +26,11 @@ BIT_MASK = NUM_SYMBOLS - 1
 
 SYMBOLS = np.zeros((NUM_SYMBOLS), dtype=np.uint8)
 
-
-def initialize_symbols():
-    hue_symbol_distance = 160.0 / NUM_SYMBOLS
-    for s in range(NUM_SYMBOLS):
-        SYMBOLS[s] = np.array([np.uint8(10 + hue_symbol_distance * s)])
-
-
-initialize_symbols()
+SYMBOLS[0] = np.uint8(10)
+SYMBOLS[1] = np.uint8(20)
+SYMBOLS[2] = np.uint8(30)
+SYMBOLS[3] = np.uint8(50)
+SYMBOLS[4] = np.uint8(80)
+SYMBOLS[5] = np.uint8(110)
+SYMBOLS[6] = np.uint8(140)
+SYMBOLS[7] = np.uint8(170)
