@@ -249,8 +249,10 @@ class State_Machine(object):
 
     def get_cyclic_hue_mean_to_reference(self, ref):
         ret, frame = self.cap.readHSVFrame()
+        return self.compute_cyclic_hue_mean_to_reference(frame, ref)
 
-        frame = frame + random.randint(-20, -15)
+    def compute_cyclic_hue_mean_to_reference(self, frame, ref):
+        ret, frame = self.cap.readHSVFrame()
 
         delta = 90 - ref
 

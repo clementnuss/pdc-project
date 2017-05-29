@@ -156,10 +156,7 @@ class Receiver(State_Machine):
             ret, frame = self.cap.readHSVFrame()
 
             detected_symbol = np.array(
-                [State_Machine.compute_cyclic_hue_frame_score(self, frame[:, :, 0], SYMBOLS[s])
-                 for s in range(0, NUM_SYMBOLS)
-                 ]
-            ).argmin()
+                [np.abs(self.compute_cyclic_hue_mean_to_reference(frame, ref) - ref) for ref in SYMBOLS]).argmin()
 
             logging.info("detected symbol: " + str(detected_symbol))
 
@@ -199,9 +196,9 @@ class Receiver(State_Machine):
 
     def do_validate_data(self):
         global msg
-        data_is_valid = True
         try:
             msg, ecc = self.rs_coder.decode(self.data_packet, return_string=False)
+            data_is_valid = all(b < 128 for b in msg)
         except RSCodecError:
             data_is_valid = False
 
