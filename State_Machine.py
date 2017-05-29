@@ -23,11 +23,11 @@ class State_Machine(object):
         self.capture_count = 0
 
         if Constants.USE_MASK:
-            self.SYMBOL_ZERO_MASK = np.full((HEIGHT, WIDTH, 3), fill_value=S_ZERO, dtype=np.uint8)
-            self.SYMBOL_ONE_MASK = np.full((HEIGHT, WIDTH, 3), fill_value=S_ONE, dtype=np.uint8)
+            self.SYMBOL_ZERO_MASK = np.full((CAMERA_HEIGHT, CAMERA_WIDTH, 3), fill_value=S_ZERO, dtype=np.uint8)
+            self.SYMBOL_ONE_MASK = np.full((CAMERA_HEIGHT, CAMERA_WIDTH, 3), fill_value=S_ONE, dtype=np.uint8)
             self.ACK_MASK = self.SYMBOL_ONE_MASK
             self.NO_ACK_MASK = self.SYMBOL_ZERO_MASK
-            self.VOID_MASK = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
+            self.VOID_MASK = np.zeros((CAMERA_HEIGHT, CAMERA_WIDTH, 3), dtype=np.uint8)
             self.screen_mask = None
         else:
             self.screen_boundaries = None
@@ -139,10 +139,10 @@ class State_Machine(object):
                     from utils.Constants import DETECTION_PROPORTION
                     if Constants.SIMULATE:
                         DETECTION_PROPORTION = 200
-                    if (cntmin_x < WIDTH / DETECTION_PROPORTION or
-                                cntmin_y < HEIGHT / DETECTION_PROPORTION or
-                                cntmax_x > (WIDTH - WIDTH / DETECTION_PROPORTION) or
-                                cntmax_y > (HEIGHT - HEIGHT / DETECTION_PROPORTION)):
+                    if (cntmin_x < CAMERA_WIDTH / DETECTION_PROPORTION or
+                                cntmin_y < CAMERA_HEIGHT / DETECTION_PROPORTION or
+                                cntmax_x > (CAMERA_WIDTH - CAMERA_WIDTH / DETECTION_PROPORTION) or
+                                cntmax_y > (CAMERA_HEIGHT - CAMERA_HEIGHT / DETECTION_PROPORTION)):
                         print("Skipping contour, out of bounds")
                         continue
 

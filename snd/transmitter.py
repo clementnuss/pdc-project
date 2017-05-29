@@ -5,6 +5,8 @@ import unireedsolomon
 
 from State_Machine import *
 from utils import Constants
+from cv.CV_GUI_Handler import HEIGHT, WIDTH, QUADRANT_HORIZONTAL_CELL_START, QUADRANT_VERTICAL_CELL_START, \
+    NUM_HORIZONTAL_CELLS, CELL_WIDTH, CELL_HEIGHT, QUADRANT_WIDTH, QUADRANT_HEIGHT
 from utils.Symbols import *
 
 logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=logging.INFO)
@@ -158,15 +160,15 @@ class Transmitter(State_Machine):
         :return: 
         """
 
-        # A data packet contains 8 bytes, and the RS message is 12 bytes long
+        # A codeword contains 144 bytes, and the RS message is 98 bytes long
         rs_encoded = self.rs_coder.encode(data, return_string=False)
-        rs_encoded_cnt = 0
 
-        num_bits_to_send = 0
-        processed_b = 0
+        bits_array = np.zeros(Constants.NUM_SYMBOLS_PER_DATA_PACKET * Constants.NUM_BITS_PER_SYMBOL, dtype=np.bool)
 
-        for i in range(0, Constants.num_symbols_per_data_packet):
-            if num_bits_to_send < NUM_BITS:
+        for i in range(0, Constants.RS_codeword_size):
+            bits_array[i * 8: (i + 1) * 8] = np.unpackbits(np.uint8(rs_encoded[i]))
+            """ Old way of dealing with the bit shits to generate symbols. 
+            if num_bits_to_send < NUM_BITS_PER_COLOR:
                 # We first shift the unsent bits to the left in order to leave 8 bits free, and we add the next
                 # data byte to the right of processed_b
 
@@ -176,13 +178,38 @@ class Transmitter(State_Machine):
                 rs_encoded_cnt += 1
                 num_bits_to_send += 8
 
-            symbol_index = (processed_b >> num_bits_to_send - NUM_BITS) & BIT_MASK
-            symbol_to_send = SYMBOLS[symbol_index]
-            num_bits_to_send -= NUM_BITS
+            symbol_index = (processed_b >> num_bits_to_send - NUM_BITS_PER_COLOR) & BIT_MASK
+            num_bits_to_send -= NUM_BITS_PER_COLOR
+            symbols_array[i] = symbol_index
+            """
 
-            self.cv_handler.display_hsv_color(symbol_to_send)
-            logging.info(str(symbol_index) + " at time " + str(time.time()))
+        for i in range(0, Constants.NUM_SYMBOLS_PER_DATA_PACKET):
+            frame = self._generate_frame(
+                bits_array[i * Constants.NUM_BITS_PER_SYMBOL: (i + 1) * Constants.NUM_BITS_PER_SYMBOL])
+            self.cv_handler.send_new_frame(cv2.cvtColor(frame, cv2.COLOR_HSV2BGR))
+
+            # logging.info(str(symbol_index) + " at time " + str(time.time()))
             State_Machine.sleep_until_next_tick(self)
+
+    def _generate_frame(self, data: np.array):
+
+        frame = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
+        frame[0: QUADRANT_HEIGHT, 0:QUADRANT_WIDTH] = self._generate_quadrant(data[0:Constants.NUM_BITS_PER_QUADRANT])
+        frame[QUADRANT_HEIGHT:, QUADRANT_WIDTH:] = self._generate_quadrant(data[Constants.NUM_BITS_PER_QUADRANT:])
+        return frame
+
+    def _generate_quadrant(self, data_for_quadrant: np.array):
+
+        quadrant = np.zeros((QUADRANT_HEIGHT, QUADRANT_WIDTH, 3))
+        for i in range(0, Constants.NUM_CELLS_PER_QUADRANT):
+            cell_start_y = QUADRANT_VERTICAL_CELL_START[int(i / NUM_HORIZONTAL_CELLS)]
+            cell_start_x = QUADRANT_HORIZONTAL_CELL_START[i % NUM_HORIZONTAL_CELLS]
+            symbol = np.zeros(8, dtype=np.bool)
+            symbol[5:8] = data_for_quadrant[i * 3: (i + 1) * 3]
+            quadrant[cell_start_y:cell_start_y + CELL_HEIGHT, cell_start_x:cell_start_x + CELL_WIDTH] = \
+                [SYMBOLS[np.packbits(symbol)], 255, 255]
+
+        return quadrant
 
     def do_calibrate(self):
 

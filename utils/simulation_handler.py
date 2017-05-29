@@ -19,8 +19,8 @@ def simulate_camera(frame):
     scaled_frame = frame[::10, ::10]
     scaled_frame = np.uint8(np.clip(scaled_frame, (0, 0, 0), (255, 255, 255)))
 
-    from utils.Constants import WIDTH, HEIGHT
-    camera_frame = np.full((HEIGHT, WIDTH, 3), (0, 0, 0), dtype=np.uint8)
+    from utils.Constants import CAMERA_WIDTH, CAMERA_HEIGHT
+    camera_frame = np.full((CAMERA_HEIGHT, CAMERA_WIDTH, 3), (0, 0, 0), dtype=np.uint8)
     if len(scaled_frame.shape) == 2:
         logging.error("Received a frame with only one dimension "
                       "(probably a binary image, used for debugging), so won't display it")
@@ -88,7 +88,7 @@ class SimulationHandler:
             self.send_new_frame(NO_FRAME)
 
         def display_hsv_frame(self, hsvframe):
-            resized_frame = scm.imresize(hsvframe, (Constants.WIDTH, Constants.HEIGHT), interp='bilinear')
+            resized_frame = scm.imresize(hsvframe, (Constants.CAMERA_WIDTH, Constants.CAMERA_HEIGHT), interp='bilinear')
             resized_frame = cv2.cvtColor(resized_frame, cv2.COLOR_HSV2BGR)
             self.send_new_frame(resized_frame)
 
@@ -140,7 +140,7 @@ class SimulationHandler:
             self.send_new_frame(NO_FRAME)
 
         def display_hsv_frame(self, hsvframe):
-            resized_frame = scm.imresize(hsvframe, (Constants.WIDTH, Constants.HEIGHT), interp='bilinear')
+            resized_frame = scm.imresize(hsvframe, (Constants.CAMERA_WIDTH, Constants.CAMERA_HEIGHT), interp='bilinear')
             resized_frame = cv2.cvtColor(resized_frame, cv2.COLOR_HSV2BGR)
             self.send_new_frame(resized_frame)
 

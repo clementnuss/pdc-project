@@ -28,7 +28,7 @@ class Receiver(State_Machine):
     # At distance ~3.20m, np.sum of the thresholded image gives ~510000 (because values are 255)
     # The threshold then needs to be around 500000
 
-    DUMMY_MASK = np.zeros((HEIGHT, WIDTH), dtype=np.uint8)
+    DUMMY_MASK = np.zeros((CAMERA_HEIGHT, CAMERA_WIDTH), dtype=np.uint8)
     DUMMY_MASK[200:300, 200:400] = np.uint8(1)
     DUMMY_MASK = np.dstack([DUMMY_MASK] * 3)
 
@@ -149,7 +149,7 @@ class Receiver(State_Machine):
         self.data_packet = np.empty(12, np.uint8)
         self.cv_handler.display_hsv_color(140)
 
-        for i in range(0, Constants.num_symbols_per_data_packet):
+        for i in range(0, Constants.NUM_SYMBOLS_PER_DATA_PACKET):
             # hue_mean = State_Machine.get_hue_mean(self)
             # logging.info("hue mean : " + str(hue_mean))
 
@@ -174,18 +174,18 @@ class Receiver(State_Machine):
             if i == 30:
                 self.cv_handler.display_hsv_color(0)
 
-            if num_unset_bits >= NUM_BITS:
-                processed_b |= detected_symbol << num_unset_bits - NUM_BITS
-                num_unset_bits -= NUM_BITS
+            if num_unset_bits >= NUM_BITS_PER_COLOR:
+                processed_b |= detected_symbol << num_unset_bits - NUM_BITS_PER_COLOR
+                num_unset_bits -= NUM_BITS_PER_COLOR
             else:
-                bit_shift = NUM_BITS - num_unset_bits
+                bit_shift = NUM_BITS_PER_COLOR - num_unset_bits
                 processed_b |= detected_symbol >> bit_shift
                 self.data_packet[byte_idx] = processed_b
                 byte_idx += 1
                 processed_b = (detected_symbol & (2 ** bit_shift - 1)) << 8 - bit_shift
-                num_unset_bits = 8 - (NUM_BITS - num_unset_bits)
+                num_unset_bits = 8 - (NUM_BITS_PER_COLOR - num_unset_bits)
 
-            if not i == Constants.num_symbols_per_data_packet - 1:
+            if not i == Constants.NUM_SYMBOLS_PER_DATA_PACKET - 1:
                 State_Machine.sleep_until_next_tick(self)
 
         self.data_packet[byte_idx] = processed_b

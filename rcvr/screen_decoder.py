@@ -166,10 +166,10 @@ def main_contour():
                 cntmin_y = np.min(cnt[:, 0, 1])
                 cntmax_y = np.max(cnt[:, 0, 1])
 
-                if (cntmin_x < WIDTH / DETECTION_PROPORTION or
-                            cntmin_y < HEIGHT / DETECTION_PROPORTION or
-                            cntmax_x > (WIDTH - WIDTH / DETECTION_PROPORTION) or
-                            cntmax_y > (HEIGHT - HEIGHT / DETECTION_PROPORTION)):
+                if (cntmin_x < CAMERA_WIDTH / DETECTION_PROPORTION or
+                            cntmin_y < CAMERA_HEIGHT / DETECTION_PROPORTION or
+                            cntmax_x > (CAMERA_WIDTH - CAMERA_WIDTH / DETECTION_PROPORTION) or
+                            cntmax_y > (CAMERA_HEIGHT - CAMERA_HEIGHT / DETECTION_PROPORTION)):
                     print("Skipping contour, out of bounds")
                     continue
 
