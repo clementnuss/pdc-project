@@ -37,6 +37,7 @@ class CV_Video_Capture_Handler:
             self.fps = self.videocapture.get(cv2.CAP_PROP_FPS)
             self.polled_frame1 = None
             self.polled_frame2 = None
+            self.hsv_frame_count = 0
             self.screen_boundaries1 = (0, CV_Video_Capture_Handler.WIDTH, 0, CV_Video_Capture_Handler.HEIGHT)
             self.screen_boundaries2 = (0, CV_Video_Capture_Handler.WIDTH, 0, CV_Video_Capture_Handler.HEIGHT)
 
@@ -120,8 +121,22 @@ class CV_Video_Capture_Handler:
         self.screen_boundaries1 = bounds1
         self.screen_boundaries2 = bounds2
 
-    def readHSVFrame(self) -> Tuple[bool, np.ndarray]:
-        return True, self._get_polled_frame()
+    def readHSVFrame(self, write=False, caller='') -> Tuple[bool, np.ndarray]:
+        frame = self._get_polled_frame()
+        if write:
+            cv2.imwrite("../readHSVFrame_at_" + caller + str(self.hsv_frame_count) + ".jpg", frame)
+            self.hsv_frame_count += 1
+
+        return frame
+
+    def readHSVFrame_akimbo(self, write=False, caller='') -> Tuple[bool, np.ndarray]:
+        frame1, frame2 = self._get_polled_akimbo_frame()
+        if write:
+            cv2.imwrite("../readHSVFrame_akimbo1_at_" + caller + str(self.hsv_frame_count) + ".jpg", frame1)
+            cv2.imwrite("../readHSVFrame_akimbo2_at_" + caller + str(self.hsv_frame_count) + ".jpg", frame2)
+            self.hsv_frame_count += 1
+
+        return frame1, frame2
 
 # Commented, because we only have HSV frame now
 #   def readFrame(self):

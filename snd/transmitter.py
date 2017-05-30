@@ -24,6 +24,7 @@ class State(Enum):
 class Transmitter(State_Machine):
     def __init__(self, file_name):
         State_Machine.__init__(self)
+        self.name = 'Transmitter'
         self.state = State.SCREEN_DETECTION
         self.byte_sequence = collections.deque()
         self.packet_count = 0

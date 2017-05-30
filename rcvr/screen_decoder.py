@@ -60,7 +60,7 @@ def get_max_hsv():
 def main():
     while True:
         # Capture frame-by-frame
-        ret, frame = cap.readFrame()
+        frame = cap.readFrame()
 
         # Display the resulting frame
         hsv_img = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -124,7 +124,7 @@ def main_contour():
     while not converged:
         time.sleep(0.2)
 
-        ret, frame = cap.readHSVFrame()
+        frame = cap.readHSVFrame()
 
         hue_delta_coeff = smooth_step(2.0 * iteration, min_iteration, max_iteration)
         delta_coeff = smooth_step(iteration, min_iteration, max_iteration)
@@ -266,7 +266,7 @@ def pass_through():
     frame_count = 0
     while 1:
         last_frame_time = time.time()
-        ret, frame = cap.readHSVFrame()
+        frame = cap.readHSVFrame()
         frame_time = time.time()
 
         frame_count = frame_count + 1

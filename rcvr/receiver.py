@@ -34,7 +34,7 @@ class Receiver(State_Machine):
 
     def __init__(self):
         State_Machine.__init__(self)
-
+        self.name = 'Receiver'
         self.state = State.SCREEN_DETECTION
         self.data_packet = np.array
         self.decoded_packet_count = 0
@@ -88,7 +88,7 @@ class Receiver(State_Machine):
             self.cap.set_akimbo_screen_boundaries(self.screen_boundaries1, self.screen_boundaries2)
         else:
             State_Machine.compute_screen_boundaries(self, S_ACK)
-            self.cap.set_screen_boundaries(self.screen_boundaries1)
+            self.cap.set_screen_boundaries(self.screen_boundaries)
 
         self.cv_handler.display_hsv_color(S_ACK)
         self.state = State.SYNC_CLOCK
@@ -158,7 +158,7 @@ class Receiver(State_Machine):
             # hue_mean = State_Machine.get_hue_mean(self)
             # logging.info("hue mean : " + str(hue_mean))
 
-            ret, frame = self.cap.readHSVFrame()
+            frame = self.cap.readHSVFrame() if not Constants.SIMULATE
 
             detected_symbol = np.array(
                 [np.abs(self.compute_cyclic_hue_mean_to_reference(frame, ref) - ref) for ref in SYMBOLS]).argmin()
@@ -231,7 +231,7 @@ class Receiver(State_Machine):
 
 def main():
     r = Receiver()
-    # ret, frame = rcvr.screen_decoder.getCameraSnapshot()
+    # frame = rcvr.screen_decoder.getCameraSnapshot()
     # rcvr.screen_decoder.displayFrame(frame)
     # r._compute_screen_mask()
     # r.do_receive()
