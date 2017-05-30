@@ -5,9 +5,9 @@ from enum import Enum
 import unireedsolomon
 
 from State_Machine import *
-from utils import Constants
 from cv.CV_GUI_Handler import HEIGHT, WIDTH, QUADRANT_HORIZONTAL_CELL_START, QUADRANT_VERTICAL_CELL_START, \
     NUM_HORIZONTAL_CELLS, CELL_WIDTH, CELL_HEIGHT, QUADRANT_WIDTH, QUADRANT_HEIGHT
+from utils import Constants
 from utils.Symbols import *
 
 logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=logging.INFO)
@@ -201,8 +201,6 @@ class Transmitter(State_Machine):
     def _generate_frame(self, data: np.array):
 
         frame = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
-        logging.info("transmitter : first quadrant: " + str(data[0:Constants.NUM_BITS_PER_QUADRANT]))
-        logging.info("transmitter : scnd  quadrant: " + str(data[Constants.NUM_BITS_PER_QUADRANT:]))
         frame[QUADRANT_HEIGHT:, 0: QUADRANT_WIDTH] = self._generate_quadrant(data[0:Constants.NUM_BITS_PER_QUADRANT])
         frame[0:QUADRANT_HEIGHT, QUADRANT_WIDTH:] = self._generate_quadrant(data[Constants.NUM_BITS_PER_QUADRANT:])
         return frame
@@ -210,6 +208,7 @@ class Transmitter(State_Machine):
     def _generate_quadrant(self, data_for_quadrant: np.array):
 
         quadrant = np.zeros((QUADRANT_HEIGHT, QUADRANT_WIDTH, 3), dtype=np.uint8)
+        logging_res = np.zeros(6)
         for i in range(0, Constants.NUM_CELLS_PER_QUADRANT):
             cell_start_y = QUADRANT_VERTICAL_CELL_START[int(i / NUM_HORIZONTAL_CELLS)]
             cell_start_x = QUADRANT_HORIZONTAL_CELL_START[i % NUM_HORIZONTAL_CELLS]
@@ -217,6 +216,9 @@ class Transmitter(State_Machine):
             symbol[5:8] = data_for_quadrant[i * 3: (i + 1) * 3]
             quadrant[cell_start_y:cell_start_y + CELL_HEIGHT, cell_start_x:cell_start_x + CELL_WIDTH] = \
                 [SYMBOLS[np.packbits(symbol)], 255, 255]
+            logging_res[i] = np.packbits(symbol)
+
+        logging.info('Sent symbols: ' + str(logging_res))
 
         return quadrant
 
