@@ -37,6 +37,9 @@ class OpenCvHandler:
 
     instance = None
 
+    def kill(self):
+        cv2.destroyAllWindows()
+
     def wait_key_func(self):
         print("Initializing main window")
         cv2.namedWindow(MAIN_WINDOW, cv2.WND_PROP_FULLSCREEN)

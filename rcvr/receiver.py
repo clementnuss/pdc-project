@@ -1,4 +1,5 @@
 import collections
+import sys
 from enum import Enum
 
 import unireedsolomon
@@ -23,6 +24,7 @@ class State(Enum):
     RECEIVE = 'Receive'
     CHECK = 'Check'
     VALIDATE_DATA = 'Validate data'
+    WRITE_TO_FILE = 'Write to file'
 
 
 class Receiver(State_Machine):
@@ -68,6 +70,8 @@ class Receiver(State_Machine):
                 self.do_check()
             elif self.state == State.VALIDATE_DATA:
                 self.do_validate_data()
+            elif self.state == State.WRITE_TO_FILE:
+                self.do_write_to_file()
             else:
                 raise NotImplementedError('Undefined receiver state')
 
@@ -223,7 +227,12 @@ class Receiver(State_Machine):
             self.decoded_packet_count = self.decoded_packet_count + 1
             self.cv_handler.display_hsv_color(S_ACK)
             for b in msg:
-                self.decoded_sequence.append(b)
+                if b == Constants.END_OF_FILE_MARKER:
+                    self.state = State.WRITE_TO_FILE
+                    logging.info("Received end of file marker. Transmission terminated.")
+                    return
+                else:
+                    self.decoded_sequence.append(b)
             logging.info("Received message : " + ''.join([chr(b) for b in msg]))
             logging.info("Sent ACK to transmitter")
         else:
@@ -239,6 +248,16 @@ class Receiver(State_Machine):
 
         if self.decoded_packet_count % 5 == 0:
             logging.info("So far, received: " + ''.join([chr(b) for b in self.decoded_sequence]))
+
+    def do_write_to_file(self):
+
+        with open("../decoded.txt", "wb") as f:
+            for byte in self.decoded_sequence:
+                f.write(byte)
+
+        logging.info("Wrote file")
+        self.cv_handler.kill()
+        sys.exit(0)
 
 
 def main():

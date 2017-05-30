@@ -1,4 +1,5 @@
 import collections
+import sys
 from enum import Enum
 
 import unireedsolomon
@@ -58,7 +59,8 @@ class Transmitter(State_Machine):
                     self.do_send()
                 else:
                     logging.info("Transmission finished")
-                    self.state = State.IDLE
+                    self.cv_handler.kill()
+                    sys.exit(0)
             elif self.state == State.RECEIVE:
                 self.do_receive()
             elif self.state == State.WAIT_FOR_ACK:
@@ -287,13 +289,14 @@ class Transmitter(State_Machine):
             while byte:
                 self.byte_sequence.append(byte)
                 byte = f.read(1)
+            self.byte_sequence.append(bytes([Constants.END_OF_FILE_MARKER]))
+
+        logging.info("Loaded file")
 
 
 def main():
-    r = Transmitter("../data/dummyText1.txt")
-    # r.state = State.SEND
+    r = Transmitter("../data/dummyTextShort.txt")
     r.run()
-    # r.do_sync()
 
 
 if __name__ == "__main__":
