@@ -1,4 +1,5 @@
 import logging
+import sys
 import threading
 from time import sleep
 
@@ -14,6 +15,8 @@ from rcvr import receiver
 from snd import transmitter
 from utils import Constants
 
+run_flag1 = True
+run_flag2 = True
 
 def simulate_camera(frame):
     scaled_frame = frame[::10, ::10]
@@ -70,6 +73,10 @@ class SimulationHandler:
             self.screen_boundaries = (0, CV_Video_Capture_Handler.CV_Video_Capture_Handler.WIDTH,
                                       0, CV_Video_Capture_Handler.CV_Video_Capture_Handler.HEIGHT)
 
+        def kill(self):
+            global run_flag1
+            run_flag1 = False
+
         def send_new_frame(self, new_frame):
             self.frame = simulate_camera(new_frame)
 
@@ -121,6 +128,10 @@ class SimulationHandler:
 
             self.screen_boundaries = (0, CV_Video_Capture_Handler.CV_Video_Capture_Handler.WIDTH,
                                       0, CV_Video_Capture_Handler.CV_Video_Capture_Handler.HEIGHT)
+
+        def kill(self):
+            global run_flag2
+            run_flag2 = False
 
         def send_new_frame(self, new_frame):
             self.frame = simulate_camera(new_frame)
@@ -176,13 +187,15 @@ def main():
     tmtr_thread.setDaemon(True)
     tmtr_thread.start()
 
-    while True:
+    while run_flag1 or run_flag2:
         # main window shows what the transmitter is displaying, secondary shows what the receiver is displaying
         cv_handler.send_new_frame(simulation_handler.tmtr.frame)
         cv_handler.send_scnd_new_frame(simulation_handler.rcvr.frame)
         sleep(0.1)
 
-    cv_handler.join_waiting_thread_handler()
+    logging.info("Simulation terminated")
+    cv_handler.kill()
+    sys.exit(0)
 
 
 if __name__ == '__main__':
