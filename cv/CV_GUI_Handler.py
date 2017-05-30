@@ -82,6 +82,16 @@ class OpenCvHandler:
         else:
             self.instance.refresh = True
 
+        new_frame[QUADRANT_HEIGHT:, QUADRANT_WIDTH:, :] = 0
+        new_frame[0:QUADRANT_HEIGHT, 0:QUADRANT_WIDTH, :] = 0
+
+        new_frame[0:5, :, :] = 0
+        new_frame[QUADRANT_HEIGHT - 5: QUADRANT_HEIGHT + 5, :, :] = 0
+        new_frame[HEIGHT - 5:HEIGHT, :, :] = 0
+        new_frame[:, 0:5, :] = 0
+        new_frame[:, QUADRANT_WIDTH - 12: QUADRANT_WIDTH + 12, :] = 0
+        new_frame[:, WIDTH - 5: WIDTH, :] = 0
+
         self.instance.new_frame = new_frame
 
     def send_scnd_new_frame(self, new_frame):
