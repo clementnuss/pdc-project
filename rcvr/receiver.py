@@ -163,13 +163,13 @@ class Receiver(State_Machine):
             # logging.info("hue mean : " + str(hue_mean))
 
             if Constants.USE_AKIMBO_SCREEN:
-                frame1, frame2 = self.cap.readHSVFrame_akimbo()
+                frame1, frame2 = self.cap.readHSVFrame_akimbo(write=True, caller=self.name)
                 start_idx = i * Constants.NUM_BITS_PER_SYMBOL
                 bits_array[start_idx: start_idx + Constants.NUM_BITS_PER_QUADRANT] = self._read_quadrant_symbols(frame1)
                 bits_array[
                 start_idx + Constants.NUM_BITS_PER_QUADRANT: start_idx + Constants.NUM_BITS_PER_SYMBOL] = self._read_quadrant_symbols(
                     frame2)
-                logging.info("detected symbol: " + str(bits_array[start_idx:start_idx + Constants.NUM_BITS_PER_SYMBOL]))
+                #logging.info("detected symbol: " + str(bits_array[start_idx:start_idx + Constants.NUM_BITS_PER_SYMBOL]))
 
             else:
                 frame = self.cap.readHSVFrame()
@@ -206,17 +206,22 @@ class Receiver(State_Machine):
         cell_height = quadrant_frame.shape[0] / 2
         cell_width = quadrant_frame.shape[1] / 3
         bits_array = np.zeros(Constants.NUM_BITS_PER_QUADRANT, dtype=np.bool)
+
+        logging_res = np.zeros(Constants.NUM_CELLS_PER_QUADRANT, dtype=np.uint8)
         for i in range(0, Constants.NUM_CELLS_PER_QUADRANT):
             cell_start_y = int(int(i / NUM_HORIZONTAL_CELLS) * cell_height)
             cell_start_x = int(int(i % NUM_HORIZONTAL_CELLS) * cell_width)
-            cell_margin = 1
+            cell_margin = 3
             subcell = quadrant_frame[cell_margin + cell_start_y:int(cell_start_y + cell_height - cell_margin),
                       cell_margin + cell_start_x:int(cell_start_x + cell_width - cell_margin), :].copy()
 
             detected_symbol = np.uint8(np.array(
                 [np.abs(self.compute_cyclic_hue_mean_to_reference(subcell, ref) - ref) for ref in SYMBOLS]).argmin())
+            logging_res[i] = detected_symbol
             bits_array[NUM_BITS_PER_COLOR * i: NUM_BITS_PER_COLOR * (i + 1)] = \
                 np.unpackbits(detected_symbol)[8 - NUM_BITS_PER_COLOR:]
+
+        logging.info("Detected cells for quadrant :" + str(logging_res))
 
         return bits_array
 
@@ -229,6 +234,7 @@ class Receiver(State_Machine):
             msg, ecc = self.rs_coder.decode(self.data_packet, return_string=False)
             data_is_valid = all(b < 128 for b in msg)
         except RSCodecError:
+            logging.info("Unable to correct RS errors")
             data_is_valid = False
 
         if data_is_valid:
