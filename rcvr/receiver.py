@@ -65,6 +65,8 @@ class Receiver(State_Machine):
                 self.do_sync()
             elif self.state == State.CALIBRATE:
                 self.do_calibrate()
+            elif self.state == State.QUADRANT_FEEDBACK:
+                self.do_quadrant_feedback()
             elif self.state == State.RECEIVE:
                 self.do_receive()
             elif self.state == State.CHECK:
@@ -150,6 +152,9 @@ class Receiver(State_Machine):
 
         self.state = State.RECEIVE
 
+    def do_quadrant_feedback(self):
+        pass
+
     def do_receive(self):
 
         logging.info("Decoding packet number " + str(self.decoded_packet_count))
@@ -164,7 +169,7 @@ class Receiver(State_Machine):
             # logging.info("hue mean : " + str(hue_mean))
 
             if Constants.USE_AKIMBO_SCREEN:
-                frame1, frame2 = self.cap.readHSVFrame_akimbo(write=True, caller=self.name)
+                frame1, frame2 = self.cap.readHSVFrame_akimbo(write=Constants.WRITE_IMAGE, caller=self.name)
                 start_idx = i * Constants.NUM_BITS_PER_SYMBOL
                 bits_array[start_idx: start_idx + Constants.NUM_BITS_PER_QUADRANT] = self._read_quadrant_symbols(frame1)
                 bits_array[
@@ -268,7 +273,7 @@ class Receiver(State_Machine):
 
         with open("../decoded.txt", "wb") as f:
             for byte in self.decoded_sequence:
-                f.write(byte)
+                f.write(np.uint8(byte))
 
         logging.info("Wrote file")
         self.cv_handler.kill()
