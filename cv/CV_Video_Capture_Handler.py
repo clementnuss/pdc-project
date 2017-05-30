@@ -121,7 +121,7 @@ class CV_Video_Capture_Handler:
         self.screen_boundaries1 = bounds1
         self.screen_boundaries2 = bounds2
 
-    def readHSVFrame(self, write=False, caller='') -> Tuple[bool, np.ndarray]:
+    def readHSVFrame(self, write=False, caller='') -> np.ndarray:
         frame = self._get_polled_frame()
         if write:
             cv2.imwrite("../readHSVFrame_at_" + caller + str(self.hsv_frame_count) + ".jpg", frame)

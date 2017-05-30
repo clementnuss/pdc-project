@@ -186,6 +186,7 @@ class Transmitter(State_Machine):
             symbols_array[i] = symbol_index
             """
 
+        # Added a wait to account for the generation of the first symbol on the receiver side
         self.sleep_until_next_tick()
         startframe = time.time()
         for i in range(0, Constants.NUM_SYMBOLS_PER_DATA_PACKET):
@@ -200,13 +201,15 @@ class Transmitter(State_Machine):
     def _generate_frame(self, data: np.array):
 
         frame = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
-        frame[0: QUADRANT_HEIGHT, 0:QUADRANT_WIDTH] = self._generate_quadrant(data[0:Constants.NUM_BITS_PER_QUADRANT])
-        frame[QUADRANT_HEIGHT:, QUADRANT_WIDTH:] = self._generate_quadrant(data[Constants.NUM_BITS_PER_QUADRANT:])
+        logging.info("transmitter : first quadrant: " + str(data[0:Constants.NUM_BITS_PER_QUADRANT]))
+        logging.info("transmitter : first quadrant: " + str(data[Constants.NUM_BITS_PER_QUADRANT:]))
+        frame[0:QUADRANT_HEIGHT, QUADRANT_WIDTH:] = self._generate_quadrant(data[0:Constants.NUM_BITS_PER_QUADRANT])
+        frame[QUADRANT_HEIGHT:, 0: QUADRANT_WIDTH] = self._generate_quadrant(data[Constants.NUM_BITS_PER_QUADRANT:])
         return frame
 
     def _generate_quadrant(self, data_for_quadrant: np.array):
 
-        quadrant = np.zeros((QUADRANT_HEIGHT, QUADRANT_WIDTH, 3))
+        quadrant = np.zeros((QUADRANT_HEIGHT, QUADRANT_WIDTH, 3), dtype=np.uint8)
         for i in range(0, Constants.NUM_CELLS_PER_QUADRANT):
             cell_start_y = QUADRANT_VERTICAL_CELL_START[int(i / NUM_HORIZONTAL_CELLS)]
             cell_start_x = QUADRANT_HORIZONTAL_CELL_START[i % NUM_HORIZONTAL_CELLS]
@@ -296,7 +299,7 @@ class Transmitter(State_Machine):
 
 
 def main():
-    r = Transmitter("../data/dummyTextShort.txt")
+    r = Transmitter("../data/dummyText1.txt")
     r.run()
 
 

@@ -159,20 +159,24 @@ class Receiver(State_Machine):
         self.data_packet = np.empty(12, np.uint8)
         self.cv_handler.display_hsv_color(140)
 
+        # Added a wait to account for the generation of the first symbol on the receiver side
         self.sleep_until_next_tick()
 
         for i in range(0, Constants.NUM_SYMBOLS_PER_DATA_PACKET):
             # hue_mean = State_Machine.get_hue_mean(self)
             # logging.info("hue mean : " + str(hue_mean))
 
-            frame = self.cap.readHSVFrame()
+            if Constants.USE_AKIMBO_SCREEN:
+                frame1, frame2 = self.cap.readHSVFrame_akimbo()
+                bits_array_symbol = np.zeros(Constants.NUM_BITS_PER_SYMBOL, dtype=np.bool)
+                bits_array_symbol[0:Constants.NUM_BITS_PER_QUADRANT] = self._read_quadrant_symbols(frame1)
+                bits_array_symbol[Constants.NUM_BITS_PER_QUADRANT:] = self._read_quadrant_symbols(frame2)
+                logging.info("detected symbol: " + str(bits_array_symbol))
 
-            # detected_symbol = np.array(
-            #    [np.abs(self.compute_cyclic_hue_mean_to_reference(frame2, ref) - ref) for ref in SYMBOLS]).argmin()
-
-            bits_array = self._read_quadrant_symbols(frame2)
-
-            logging.info("detected symbol: " + str(bits_array))
+            else:
+                detected_symbol = np.array(
+                [np.abs(self.compute_cyclic_hue_mean_to_reference(frame2, ref) - ref) for ref in SYMBOLS]).argmin()
+                logging.info("detected symbol: " + str(detected_symbol))
 
             if i == 29:
                 self.cv_handler.display_hsv_color(30)
@@ -207,8 +211,8 @@ class Receiver(State_Machine):
             cell_start_y = int(int(i / NUM_HORIZONTAL_CELLS) * cell_height)
             cell_start_x = int(int(i % NUM_HORIZONTAL_CELLS) * cell_width)
             cell_margin = 1
-            subcell = quadrant_frame[cell_margin + cell_start_y:cell_start_y + cell_height - cell_margin,
-                      cell_margin + cell_start_x:cell_start_x + cell_width - cell_margin, :].copy()
+            subcell = quadrant_frame[cell_margin + cell_start_y:int(cell_start_y + cell_height - cell_margin),
+                      cell_margin + cell_start_x:int(cell_start_x + cell_width - cell_margin), :].copy()
 
             detected_symbol = np.uint8(np.array(
                 [np.abs(self.compute_cyclic_hue_mean_to_reference(subcell, ref) - ref) for ref in SYMBOLS]).argmin())

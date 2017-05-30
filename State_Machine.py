@@ -215,7 +215,7 @@ class State_Machine(object):
             logging.info("Iteration with min: " + str(min_hsv) + " and max: " + str(max_hsv))
 
             frame_thresholded = getMask(frame, min_hsv, max_hsv)
-            #self.cv_handler.display_frame(frame_thresholded)
+            # self.cv_handler.display_frame(frame_thresholded)
             canny_frame = cv2.Canny(frame_thresholded, 50, 150, apertureSize=3)
             contoured_frame, contours0, hierarchy = cv2.findContours(canny_frame, mode=cv2.RETR_EXTERNAL,
                                                                      method=cv2.CHAIN_APPROX_SIMPLE)
@@ -241,10 +241,10 @@ class State_Machine(object):
                     from utils.Constants import DETECTION_PROPORTION
                     if Constants.SIMULATE:
                         DETECTION_PROPORTION = 200
-                    if (cntmin_x < WIDTH / DETECTION_PROPORTION or
-                                cntmin_y < HEIGHT / DETECTION_PROPORTION or
-                                cntmax_x > (WIDTH - WIDTH / DETECTION_PROPORTION) or
-                                cntmax_y > (HEIGHT - HEIGHT / DETECTION_PROPORTION)):
+                    if (cntmin_x < CAMERA_WIDTH / DETECTION_PROPORTION or
+                                cntmin_y < CAMERA_HEIGHT / DETECTION_PROPORTION or
+                                cntmax_x > (CAMERA_WIDTH - CAMERA_WIDTH / DETECTION_PROPORTION) or
+                                cntmax_y > (CAMERA_HEIGHT - CAMERA_HEIGHT / DETECTION_PROPORTION)):
                         print("Skipping contour, out of bounds")
                         continue
 
@@ -262,7 +262,7 @@ class State_Machine(object):
 
                 if best_contour1 is not None:
                     cv2.drawContours(frame, [best_contour1], -1, (255, 255, 255), thickness=2)
-                    #cv2.imshow('contoured frame', frame)
+                    # cv2.imshow('contoured frame', frame)
 
                     newmin_x, newmax_x, newmin_y, newmax_y = self._get_contour_bounds(best_contour1)
 
@@ -282,7 +282,7 @@ class State_Machine(object):
 
                 if best_contour2 is not None:
                     cv2.drawContours(frame, [best_contour2], -1, (255, 255, 255), thickness=2)
-                    #cv2.imshow('contoured frame', frame)
+                    # cv2.imshow('contoured frame', frame)
 
                     newmin_x, newmax_x, newmin_y, newmax_y = self._get_contour_bounds(best_contour2)
 
@@ -399,26 +399,41 @@ class State_Machine(object):
         return self._get_mean(2)
 
     def _get_mean(self, i, capture=False):
-        frame = self.cap.readHSVFrame()
+        if Constants.USE_AKIMBO_SCREEN and self.name == 'Receiver':
+            frame1, frame2 = self.cap.readHSVFrame_akimbo()
+            if Constants.DEBUG:
+                cvtframe1 = cv2.cvtColor(frame1, cv2.COLOR_HSV2BGR)
+                cvtframe2 = cv2.cvtColor(frame2, cv2.COLOR_HSV2BGR)
+                if capture:
+                    cv2.imwrite("capture_frame1_" + str(self.capture_count) + ".jpg", cvtframe1)
+                    cv2.imwrite("capture_frame2_" + str(self.capture_count) + ".jpg", cvtframe2)
+                    self.capture_count = self.capture_count + 1
 
-        if Constants.DEBUG:
-            cvtframe = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
-            if capture:
-                cv2.imwrite("capture" + str(self.capture_count) + ".jpg", cvtframe)
-                self.capture_count = self.capture_count + 1
+            return np.array(frame1[:, :, i].mean(), frame2[:, :, i].mean()).mean()
 
-        return frame[:, :, i].mean()
+        else:
+            frame = self.cap.readHSVFrame()
+            if Constants.DEBUG:
+                cvtframe = cv2.cvtColor(frame, cv2.COLOR_HSV2BGR)
+                if capture:
+                    cv2.imwrite("capture" + str(self.capture_count) + ".jpg", cvtframe)
+                    self.capture_count = self.capture_count + 1
+
+            return frame[:, :, i].mean()
 
     def compute_hue_mean(self, frame) -> np.float64:
         return self._compute_mean(self, frame, 0)
 
     def get_cyclic_hue_mean_to_reference(self, ref):
-        frame = self.cap.readHSVFrame()
-        return self.compute_cyclic_hue_mean_to_reference(frame, ref)
+        if Constants.USE_AKIMBO_SCREEN:
+            frame1, frame2 = self.cap.readHSVFrame_akimbo()
+            return np.array(self.compute_cyclic_hue_mean_to_reference(frame1, ref),
+                            self.compute_cyclic_hue_mean_to_reference(frame2, ref)).mean()
+        else:
+            frame = self.cap.readHSVFrame()
+            return self.compute_cyclic_hue_mean_to_reference(frame, ref)
 
     def compute_cyclic_hue_mean_to_reference(self, frame, ref):
-        frame = self.cap.readHSVFrame()
-
         delta = 90 - ref
 
         adjusted_frame = (np.int32(frame[:, :, 0]) + delta) % 180
