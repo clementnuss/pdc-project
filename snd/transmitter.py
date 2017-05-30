@@ -202,9 +202,9 @@ class Transmitter(State_Machine):
 
         frame = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
         logging.info("transmitter : first quadrant: " + str(data[0:Constants.NUM_BITS_PER_QUADRANT]))
-        logging.info("transmitter : first quadrant: " + str(data[Constants.NUM_BITS_PER_QUADRANT:]))
-        frame[0:QUADRANT_HEIGHT, QUADRANT_WIDTH:] = self._generate_quadrant(data[0:Constants.NUM_BITS_PER_QUADRANT])
-        frame[QUADRANT_HEIGHT:, 0: QUADRANT_WIDTH] = self._generate_quadrant(data[Constants.NUM_BITS_PER_QUADRANT:])
+        logging.info("transmitter : scnd  quadrant: " + str(data[Constants.NUM_BITS_PER_QUADRANT:]))
+        frame[QUADRANT_HEIGHT:, 0: QUADRANT_WIDTH] = self._generate_quadrant(data[0:Constants.NUM_BITS_PER_QUADRANT])
+        frame[0:QUADRANT_HEIGHT, QUADRANT_WIDTH:] = self._generate_quadrant(data[Constants.NUM_BITS_PER_QUADRANT:])
         return frame
 
     def _generate_quadrant(self, data_for_quadrant: np.array):

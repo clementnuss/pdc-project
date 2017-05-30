@@ -152,13 +152,9 @@ class Receiver(State_Machine):
     def do_receive(self):
 
         logging.info("Decoding packet number " + str(self.decoded_packet_count))
-
-        processed_b = 0
-        num_unset_bits = 8
-        byte_idx = 0
-        self.data_packet = np.empty(12, np.uint8)
         self.cv_handler.display_hsv_color(140)
 
+        bits_array = np.zeros(Constants.NUM_SYMBOLS_PER_DATA_PACKET * Constants.NUM_BITS_PER_SYMBOL, dtype=np.bool)
         # Added a wait to account for the generation of the first symbol on the receiver side
         self.sleep_until_next_tick()
 
@@ -168,15 +164,30 @@ class Receiver(State_Machine):
 
             if Constants.USE_AKIMBO_SCREEN:
                 frame1, frame2 = self.cap.readHSVFrame_akimbo()
-                bits_array_symbol = np.zeros(Constants.NUM_BITS_PER_SYMBOL, dtype=np.bool)
-                bits_array_symbol[0:Constants.NUM_BITS_PER_QUADRANT] = self._read_quadrant_symbols(frame1)
-                bits_array_symbol[Constants.NUM_BITS_PER_QUADRANT:] = self._read_quadrant_symbols(frame2)
-                logging.info("detected symbol: " + str(bits_array_symbol))
+                start_idx = i * Constants.NUM_BITS_PER_SYMBOL
+                bits_array[start_idx: start_idx + Constants.NUM_BITS_PER_QUADRANT] = self._read_quadrant_symbols(frame1)
+                bits_array[
+                start_idx + Constants.NUM_BITS_PER_QUADRANT: start_idx + Constants.NUM_BITS_PER_SYMBOL] = self._read_quadrant_symbols(
+                    frame2)
+                logging.info("detected symbol: " + str(bits_array[start_idx:start_idx + Constants.NUM_BITS_PER_SYMBOL]))
 
             else:
+                frame = self.cap.readHSVFrame()
                 detected_symbol = np.array(
-                [np.abs(self.compute_cyclic_hue_mean_to_reference(frame2, ref) - ref) for ref in SYMBOLS]).argmin()
+                    [np.abs(self.compute_cyclic_hue_mean_to_reference(frame, ref) - ref) for ref in SYMBOLS]).argmin()
                 logging.info("detected symbol: " + str(detected_symbol))
+                """Old code used to parse binary symbols
+                if num_unset_bits >= NUM_BITS_PER_COLOR:
+                    processed_b |= detected_symbol << num_unset_bits - NUM_BITS_PER_COLOR
+                    num_unset_bits -= NUM_BITS_PER_COLOR
+                else:
+                    bit_shift = NUM_BITS_PER_COLOR - num_unset_bits
+                    processed_b |= detected_symbol >> bit_shift
+                    self.data_packet[byte_idx] = processed_b
+                    byte_idx += 1
+                    processed_b = (detected_symbol & (2 ** bit_shift - 1)) << 8 - bit_shift
+                    num_unset_bits = 8 - (NUM_BITS_PER_COLOR - num_unset_bits)
+                """
 
             if i == 29:
                 self.cv_handler.display_hsv_color(30)
@@ -185,22 +196,10 @@ class Receiver(State_Machine):
             if i == 31:
                 self.cv_handler.display_hsv_color(0)
 
-            """ Old code used to parse binary symbols
-            if num_unset_bits >= NUM_BITS_PER_COLOR:
-                processed_b |= detected_symbol << num_unset_bits - NUM_BITS_PER_COLOR
-                num_unset_bits -= NUM_BITS_PER_COLOR
-            else:
-                bit_shift = NUM_BITS_PER_COLOR - num_unset_bits
-                processed_b |= detected_symbol >> bit_shift
-                self.data_packet[byte_idx] = processed_b
-                byte_idx += 1
-                processed_b = (detected_symbol & (2 ** bit_shift - 1)) << 8 - bit_shift
-                num_unset_bits = 8 - (NUM_BITS_PER_COLOR - num_unset_bits)
-            """
             if not i == Constants.NUM_SYMBOLS_PER_DATA_PACKET - 1:
                 State_Machine.sleep_until_next_tick(self)
 
-        self.data_packet[byte_idx] = processed_b
+        self.data_packet = np.packbits(bits_array)
         self.state = State.VALIDATE_DATA
 
     def _read_quadrant_symbols(self, quadrant_frame: np.ndarray):
