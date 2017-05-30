@@ -94,7 +94,7 @@ class SimulationHandler:
 
         def readHSVFrame(self) -> Tuple[bool, np.ndarray]:
             ret, frame = True, SimulationHandler.instance.rcvr.frame
-            cropped_frame = crop(simulate_camera(frame), self.screen_boundaries)
+            cropped_frame = crop(frame, self.screen_boundaries)
             return ret, cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2HSV)
 
         def set_screen_boundaries(self, bounds):
@@ -146,7 +146,7 @@ class SimulationHandler:
 
         def readHSVFrame(self) -> Tuple[bool, np.ndarray]:
             ret, frame = True, SimulationHandler.instance.tmtr.frame
-            cropped_frame = crop(simulate_camera(frame), self.screen_boundaries)
+            cropped_frame = crop(frame, self.screen_boundaries)
             return ret, cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2HSV)
 
         def set_screen_boundaries(self, bounds):

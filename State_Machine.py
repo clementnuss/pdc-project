@@ -251,8 +251,6 @@ class State_Machine(object):
         return self.compute_cyclic_hue_mean_to_reference(frame, ref)
 
     def compute_cyclic_hue_mean_to_reference(self, frame, ref):
-        ret, frame = self.cap.readHSVFrame()
-
         delta = 90 - ref
 
         adjusted_frame = (np.int32(frame[:, :, 0]) + delta) % 180

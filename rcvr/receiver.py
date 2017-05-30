@@ -5,6 +5,7 @@ import unireedsolomon
 from unireedsolomon import RSCodecError
 
 from State_Machine import *
+from cv.CV_GUI_Handler import NUM_HORIZONTAL_CELLS
 from cv.ImageProcessing import *
 from utils import Constants
 from utils.Symbols import *
@@ -149,31 +150,29 @@ class Receiver(State_Machine):
         self.data_packet = np.empty(12, np.uint8)
         self.cv_handler.display_hsv_color(140)
 
+        self.sleep_until_next_tick()
+
         for i in range(0, Constants.NUM_SYMBOLS_PER_DATA_PACKET):
             # hue_mean = State_Machine.get_hue_mean(self)
             # logging.info("hue mean : " + str(hue_mean))
 
-            ret, frame = self.cap.readHSVFrame()
+            ret, frame2 = self.cap.readHSVFrame()
 
-            detected_symbol = np.array(
-                [np.abs(self.compute_cyclic_hue_mean_to_reference(frame, ref) - ref) for ref in SYMBOLS]).argmin()
+            # detected_symbol = np.array(
+            #    [np.abs(self.compute_cyclic_hue_mean_to_reference(frame2, ref) - ref) for ref in SYMBOLS]).argmin()
 
-            logging.info("detected symbol: " + str(detected_symbol))
+            bits_array = self._read_quadrant_symbols(frame2)
 
-            if i == 31:
-                self.cv_handler.display_hsv_color(60)
-            if i == 30:
-                self.cv_handler.display_hsv_color(90)
+            logging.info("detected symbol: " + str(bits_array))
+
             if i == 29:
-                self.cv_handler.display_hsv_color(160)
-
-            if i == 28:
                 self.cv_handler.display_hsv_color(30)
-            if i == 29:
-                self.cv_handler.display_hsv_color(55)
             if i == 30:
+                self.cv_handler.display_hsv_color(55)
+            if i == 31:
                 self.cv_handler.display_hsv_color(0)
 
+            """ Old code used to parse binary symbols
             if num_unset_bits >= NUM_BITS_PER_COLOR:
                 processed_b |= detected_symbol << num_unset_bits - NUM_BITS_PER_COLOR
                 num_unset_bits -= NUM_BITS_PER_COLOR
@@ -184,12 +183,30 @@ class Receiver(State_Machine):
                 byte_idx += 1
                 processed_b = (detected_symbol & (2 ** bit_shift - 1)) << 8 - bit_shift
                 num_unset_bits = 8 - (NUM_BITS_PER_COLOR - num_unset_bits)
-
+            """
             if not i == Constants.NUM_SYMBOLS_PER_DATA_PACKET - 1:
                 State_Machine.sleep_until_next_tick(self)
 
         self.data_packet[byte_idx] = processed_b
         self.state = State.VALIDATE_DATA
+
+    def _read_quadrant_symbols(self, quadrant_frame: np.ndarray):
+        cell_height = quadrant_frame.shape[0] / 2
+        cell_width = quadrant_frame.shape[1] / 3
+        bits_array = np.zeros(Constants.NUM_BITS_PER_QUADRANT, dtype=np.bool)
+        for i in range(0, Constants.NUM_CELLS_PER_QUADRANT):
+            cell_start_y = int(int(i / NUM_HORIZONTAL_CELLS) * cell_height)
+            cell_start_x = int(int(i % NUM_HORIZONTAL_CELLS) * cell_width)
+            cell_margin = 1
+            subcell = quadrant_frame[cell_margin + cell_start_y:cell_start_y + cell_height - cell_margin,
+                      cell_margin + cell_start_x:cell_start_x + cell_width - cell_margin, :].copy()
+
+            detected_symbol = np.uint8(np.array(
+                [np.abs(self.compute_cyclic_hue_mean_to_reference(subcell, ref) - ref) for ref in SYMBOLS]).argmin())
+            bits_array[NUM_BITS_PER_COLOR * i: NUM_BITS_PER_COLOR * (i + 1)] = \
+                np.unpackbits(detected_symbol)[8 - NUM_BITS_PER_COLOR:]
+
+        return bits_array
 
     def do_check(self):
         pass

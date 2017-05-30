@@ -161,7 +161,7 @@ class Transmitter(State_Machine):
         """
 
         # A codeword contains 144 bytes, and the RS message is 98 bytes long
-        rs_encoded = self.rs_coder.encode(data, return_string=False)
+        rs_encoded = self.rs_coder.encode_fast(data, return_string=False)
 
         bits_array = np.zeros(Constants.NUM_SYMBOLS_PER_DATA_PACKET * Constants.NUM_BITS_PER_SYMBOL, dtype=np.bool)
 
@@ -183,12 +183,15 @@ class Transmitter(State_Machine):
             symbols_array[i] = symbol_index
             """
 
+        self.sleep_until_next_tick()
+        startframe = time.time()
         for i in range(0, Constants.NUM_SYMBOLS_PER_DATA_PACKET):
             frame = self._generate_frame(
                 bits_array[i * Constants.NUM_BITS_PER_SYMBOL: (i + 1) * Constants.NUM_BITS_PER_SYMBOL])
             self.cv_handler.send_new_frame(cv2.cvtColor(frame, cv2.COLOR_HSV2BGR))
 
-            # logging.info(str(symbol_index) + " at time " + str(time.time()))
+            logging.info("Time needed for a frame : " + str(time.time() - startframe))
+            startframe = time.time()
             State_Machine.sleep_until_next_tick(self)
 
     def _generate_frame(self, data: np.array):
