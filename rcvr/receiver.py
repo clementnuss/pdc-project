@@ -158,7 +158,7 @@ class Receiver(State_Machine):
             # hue_mean = State_Machine.get_hue_mean(self)
             # logging.info("hue mean : " + str(hue_mean))
 
-            frame = self.cap.readHSVFrame() if not Constants.SIMULATE
+            frame = self.cap.readHSVFrame()
 
             detected_symbol = np.array(
                 [np.abs(self.compute_cyclic_hue_mean_to_reference(frame, ref) - ref) for ref in SYMBOLS]).argmin()
