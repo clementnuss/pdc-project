@@ -17,6 +17,7 @@ logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=lo
 class State(Enum):
     IDLE = 'Idle'
     SCREEN_DETECTION = 'Screen detection'
+    QUADRANT_FEEDBACK = 'Quadrant feedback'
     STAND_BY = 'Stand by'
     SYNC_CLOCK = 'Sync clock'
     CALIBRATE = 'Calibrate colors'

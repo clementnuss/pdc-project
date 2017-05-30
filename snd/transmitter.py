@@ -20,6 +20,7 @@ class State(Enum):
     SYNC_CLOCK = 'Sync clock'
     CALIBRATE = 'Calibrate colors'
     SEND = 'Send'
+    QUADRANT_FEEDBACK = 'Quadrant feedback'
     RECEIVE = 'Receive'
     WAIT_FOR_ACK = 'Wait'
 
@@ -55,6 +56,8 @@ class Transmitter(State_Machine):
                 self.do_sync()
             elif self.state == State.CALIBRATE:
                 self.do_calibrate()
+            elif self.state == State.QUADRANT_FEEDBACK:
+                self.do_quadrant_feedback()
             elif self.state == State.SEND:
                 if len(self.byte_sequence) > 0:
                     self.do_send()
@@ -136,6 +139,18 @@ class Transmitter(State_Machine):
                 logging.info("Transmitter finished the synchronization phase")
             else:
                 logging.info("NO ACK")
+
+    def do_calibrate(self):
+
+        for i in range(0, NUM_SYMBOLS):
+            for x in range(0, 3):
+                self.cv_handler.display_hsv_color(SYMBOLS[i])
+                State_Machine.sleep_until_next_tick(self)
+
+        self.state = State.SEND
+
+    def do_quadrant_feedback(self):
+        pass
 
     def do_send(self):
         data_packet = collections.deque()
@@ -221,18 +236,6 @@ class Transmitter(State_Machine):
         logging.info('Sent symbols: ' + str(logging_res))
 
         return quadrant
-
-    def do_calibrate(self):
-
-        for i in range(0, NUM_SYMBOLS):
-            for x in range(0, 3):
-                self.cv_handler.display_hsv_color(SYMBOLS[i])
-                State_Machine.sleep_until_next_tick(self)
-
-        self.state = State.SEND
-
-    def do_receive(self):
-        pass
 
     def do_get_ack(self):
 

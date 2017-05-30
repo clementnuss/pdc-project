@@ -21,6 +21,7 @@ class State_Machine(object):
         self.tick_count = 0
         self.log_count = 0
         self.capture_count = 0
+        self.screen_orientation = None
 
         if Constants.USE_MASK:
             self.SYMBOL_ZERO_MASK = np.full((CAMERA_HEIGHT, CAMERA_WIDTH, 3), fill_value=S_ZERO, dtype=np.uint8)
@@ -315,20 +316,23 @@ class State_Machine(object):
             if (max_x1 - min_x1) < (max_y1 - min_y1):
                 self.screen_boundaries1 = (min_x1, max_x1, min_y1, (min_y1 + max_y1) / 2)
                 self.screen_boundaries1 = (min_x1, max_x1, (min_y1 + max_y1) / 2, max_y1)
+                self.screen_orientation = 'vertical'
             # Big screen is horizontal
             else:
                 self.screen_boundaries1 = (min_x1, (min_x1 + max_x1) / 2, min_y1, max_y1)
                 self.screen_boundaries2 = ((min_x1 + max_x1) / 2, max_x1, min_y1, max_y1)
-
+                self.screen_orientation = 'horizontal'
             self.screen_boundaries2 = None
 
         # 2 contours in diagonal
         elif (min_x1 + max_x1) / 2.0 < (min_x2 + max_x2) / 2.0:
             self.screen_boundaries1 = (min_x1, max_x1, min_y1, max_y1)
             self.screen_boundaries2 = (min_x2, max_x2, min_y2, max_y2)
+            self.screen_orientation = 'ascendent'
         else:
             self.screen_boundaries2 = (min_x1, max_x1, min_y1, max_y1)
             self.screen_boundaries1 = (min_x2, max_x2, min_y2, max_y2)
+            self.screen_orientation = 'descendent'
 
     def _get_contour_bounds(self, contour):
         return (
