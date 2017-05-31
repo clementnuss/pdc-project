@@ -110,6 +110,25 @@ class SimulationHandler:
             color_frame = np.full((CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH, 3), converted_color, dtype=np.uint8)
             self.send_new_frame(color_frame)
 
+        def display_binary_hsv_color_vertical(self, hsv_col1, hsv_col2):
+            converted_col1 = cv2.cvtColor(np.array([[[hsv_col1, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
+            converted_col2 = cv2.cvtColor(np.array([[[hsv_col2, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
+
+            frame = np.empty((CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH, 3), dtype=np.uint8)
+
+            frame[:, 0: CV_GUI_Handler.WIDTH / 2, :] = converted_col1
+            frame[:, CV_GUI_Handler.WIDTH / 2:, :] = converted_col2
+            self.send_new_frame(frame)
+
+        def display_binary_hsv_color_horizontal(self, hsv_col1, hsv_col2):
+            converted_col1 = cv2.cvtColor(np.array([[[hsv_col1, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
+            converted_col2 = cv2.cvtColor(np.array([[[hsv_col2, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
+
+            frame = np.empty((CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH, 3), dtype=np.uint8)
+
+            frame[: CV_GUI_Handler.HEIGHT / 2, :, :] = converted_col1
+            frame[CV_GUI_Handler.HEIGHT / 2:, :, :] = converted_col2
+
         def black_out(self):
             self.send_new_frame(NO_FRAME)
 
@@ -171,6 +190,27 @@ class SimulationHandler:
             converted_color = cv2.cvtColor(np.array([[[hsv_col, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
             color_frame = np.full((CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH, 3), converted_color, dtype=np.uint8)
             self.send_new_frame(color_frame)
+
+        def display_binary_hsv_color_vertical(self, hsv_col1, hsv_col2):
+            converted_col1 = cv2.cvtColor(np.array([[[hsv_col1, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
+            converted_col2 = cv2.cvtColor(np.array([[[hsv_col2, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
+
+            frame = np.empty((CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH, 3), dtype=np.uint8)
+
+            frame[:, 0: CV_GUI_Handler.WIDTH / 2, :] = converted_col1
+            frame[:, CV_GUI_Handler.WIDTH / 2:, :] = converted_col2
+            self.send_new_frame(frame)
+
+        def display_binary_hsv_color_horizontal(self, hsv_col1, hsv_col2):
+            converted_col1 = cv2.cvtColor(np.array([[[hsv_col1, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
+            converted_col2 = cv2.cvtColor(np.array([[[hsv_col2, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
+
+            frame = np.empty((CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH, 3), dtype=np.uint8)
+
+            frame[: CV_GUI_Handler.HEIGHT / 2, :, :] = converted_col1
+            frame[CV_GUI_Handler.HEIGHT / 2:, :, :] = converted_col2
+
+            self.send_new_frame(frame)
 
         def black_out(self):
             self.send_new_frame(NO_FRAME)

@@ -5,9 +5,9 @@ from enum import Enum
 import unireedsolomon
 
 from State_Machine import *
-from utils import Constants
 from cv.CV_GUI_Handler import HEIGHT, WIDTH, QUADRANT_HORIZONTAL_CELL_START, QUADRANT_VERTICAL_CELL_START, \
     NUM_HORIZONTAL_CELLS, CELL_WIDTH, CELL_HEIGHT, QUADRANT_WIDTH, QUADRANT_HEIGHT
+from utils import Constants
 from utils.Symbols import *
 
 logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=logging.INFO)
@@ -147,14 +147,18 @@ class Transmitter(State_Machine):
                 self.cv_handler.display_hsv_color(SYMBOLS[i])
                 State_Machine.sleep_until_next_tick(self)
 
-        self.state = State.SEND
+        self.state = State.QUADRANT_FEEDBACK
 
     def do_quadrant_feedback(self):
+        logging.info("Transmitter entered quadrant feedback")
         self.sleep_n_ticks(3)
-        frame = self.cap.read_hsv_frame(write=True, caller="transmitter_quadrant_feedback")
+        frame = self.cap.readHSVFrame(write=True, caller="transmitter_quadrant_feedback")
 
-        left_half_hue = frame[:, : WIDTH / 2 - 10, 0]
-        right_half_hue = frame[:, WIDTH / 2 + 10:, 0]
+        half_sep = int(frame.shape[1] / 2)
+        margin = int(frame.shape[1] * 0.05)
+
+        left_half_hue = frame[:, : half_sep - margin, :]
+        right_half_hue = frame[:, half_sep + margin:, :]
 
         left_ack_received = (
             np.abs(self.compute_cyclic_hue_mean_to_reference(left_half_hue, S_ACK) - S_ACK)
@@ -204,12 +208,16 @@ class Transmitter(State_Machine):
 
         if ack_received and self.screen_orientation == 'horizontal':
             self.available_quadrants = (True, True, False, False)
+            logging.info("Transmitter received feedback, is top horizontal")
         elif ack_received and self.screen_orientation == 'vertical':
             self.available_quadrants = (True, False, True, False)
+            logging.info("Transmitter received feedback, is left vertical")
         elif not ack_received and self.screen_orientation == 'horizontal':
             self.available_quadrants = (False, False, True, True)
+            logging.info("Transmitter received feedback, is bottom horizontal")
         else:
             self.available_quadrants = (False, True, False, True)
+            logging.info("Transmitter received feedback, is right horizontal")
 
     def do_send(self):
         data_packet = collections.deque()

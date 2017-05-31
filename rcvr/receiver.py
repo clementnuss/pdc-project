@@ -150,7 +150,7 @@ class Receiver(State_Machine):
         for i in range(0, NUM_SYMBOLS):
             logging.info("symbol " + str(i) + " : " + str(SYMBOLS[i]))
 
-        self.state = State.RECEIVE
+        self.state = State.QUADRANT_FEEDBACK
 
     def do_quadrant_feedback(self):
         """
@@ -173,20 +173,26 @@ class Receiver(State_Machine):
         # T .--.--.--.
         # R           _._._._._
 
+        logging.info("Receiver entered quadrant feedback mode")
+
         # First pass
         if self.screen_orientation == 'horizontal':
             self.cv_handler.display_binary_hsv_color_vertical(S_NO_ACK, S_NO_ACK)
+            logging.info("Receiver sent feedback, is right horizontal")
             self.sleep_n_ticks(4)
         elif self.screen_orientation == 'vertical':
             self.cv_handler.display_binary_hsv_color_vertical(S_NO_ACK, S_ACK)
+            logging.info("Receiver sent feedback, is right horizontal")
             self.sleep_n_ticks(4)
         elif self.screen_orientation == 'ascendant':
             self.cv_handler.display_binary_hsv_color_vertical(S_ACK, S_NO_ACK)
+            logging.info("Receiver sent feedback, is right horizontal")
             self.sleep_n_ticks(4)
             self.state = State.RECEIVE
             return
         else:
             self.cv_handler.display_binary_hsv_color_vertical(S_ACK, S_ACK)
+            logging.info("Receiver sent feedback, is right horizontal")
             self.sleep_n_ticks(4)
             self.state = State.RECEIVE
             return

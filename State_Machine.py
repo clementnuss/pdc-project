@@ -186,6 +186,8 @@ class State_Machine(object):
 
         min_x1 = min_y1 = max_x1 = max_y1 = 0
         min_x2 = min_y2 = max_x2 = max_y2 = 0
+        contour1 = None
+        contour2 = None
 
         typical_small_contour_size = 400 if not Constants.SIMULATE else 1000
 
@@ -272,6 +274,7 @@ class State_Machine(object):
 
                     if self._within_convergence(d1, d2, d3, d4):
                         contour1_converged = True
+                        contour1 = (min_x1, max_x1, min_y1, max_y1)
                         cv2.rectangle(frame, (min_x1, min_y1), (max_x1, max_y1), (0, 255, 0), thickness=2)
                         cv2.imwrite('../contour1_' + self.name + '.jpg', frame)
                         print("Contour 1 converged")
@@ -292,6 +295,7 @@ class State_Machine(object):
 
                     if self._within_convergence(d1, d2, d3, d4):
                         contour2_converged = True
+                        contour2 = (min_x2, max_x2, min_y2, max_y2)
                         cv2.rectangle(frame, (min_x2, min_y2), (max_x2, max_y2), (0, 0, 255), thickness=2)
                         cv2.imwrite('../contour2_' + self.name + '.jpg', frame)
                         print("Contour 2 converged")
@@ -314,7 +318,7 @@ class State_Machine(object):
         if not contour2_converged:
             # Big screen is vertical
             if (max_x1 - min_x1) < (max_y1 - min_y1):
-                self.screen_boundaries1 = (min_x1, max_x1, min_y1, (min_y1 + max_y1) / 2)
+                self.screen_boundaries1 = (min_x1, max_x1, 0, (min_y1 + max_y1) / 2)
                 self.screen_boundaries1 = (min_x1, max_x1, (min_y1 + max_y1) / 2, max_y1)
                 self.screen_orientation = 'vertical'
             # Big screen is horizontal
@@ -325,14 +329,27 @@ class State_Machine(object):
             self.screen_boundaries2 = None
 
         # 2 contours in diagonal
-        elif (min_x1 + max_x1) / 2.0 < (min_x2 + max_x2) / 2.0:
-            self.screen_boundaries1 = (min_x1, max_x1, min_y1, max_y1)
-            self.screen_boundaries2 = (min_x2, max_x2, min_y2, max_y2)
-            self.screen_orientation = 'ascendant'
         else:
-            self.screen_boundaries2 = (min_x1, max_x1, min_y1, max_y1)
-            self.screen_boundaries1 = (min_x2, max_x2, min_y2, max_y2)
-            self.screen_orientation = 'descendant'
+
+            if min_x2 < min_x1:
+                tmp = contour1
+                contour1 = contour2
+                contour2 = tmp
+
+                min_x1, max_x1, min_y1, max_y1 = contour1
+                min_x2, max_x2, min_y2, max_y2 = contour2
+
+            if ((min_y1 + max_y1) / 2.0 < (min_y2 + max_y2) / 2.0):
+                self.screen_boundaries1 = (min_x1, max_x1, min_y1, max_y1)
+                self.screen_boundaries2 = (min_x2, max_x2, min_y2, max_y2)
+                self.screen_orientation = 'descendant'
+
+            else:
+                self.screen_boundaries1 = (min_x1, max_x1, min_y1, max_y1)
+                self.screen_boundaries2 = (min_x2, max_x2, min_y2, max_y2)
+                self.screen_orientation = 'ascendant'
+
+            logging.info("Detected screen orientation: " + self.screen_orientation)
 
     def _get_contour_bounds(self, contour):
         return (
