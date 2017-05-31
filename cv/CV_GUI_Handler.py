@@ -1,5 +1,4 @@
 import threading
-import time
 
 import cv2
 import numpy as np
@@ -102,6 +101,28 @@ class OpenCvHandler:
         color_frame = np.full((HEIGHT, WIDTH, 3), converted_color, dtype=np.uint8)
         self.send_new_frame(color_frame)
 
+    def display_binary_hsv_color_vertical(self, hsv_col1, hsv_col2):
+        converted_col1 = cv2.cvtColor(np.array([[[hsv_col1, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
+        converted_col2 = cv2.cvtColor(np.array([[[hsv_col2, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
+
+        frame = np.empty((HEIGHT, WIDTH, 3), dtype=np.uint8)
+
+        frame[:, 0: WIDTH / 2, :] = converted_col1
+        frame[:, WIDTH / 2:, :] = converted_col2
+        self.send_new_frame(frame)
+
+    def display_binary_hsv_color_horizontal(self, hsv_col1, hsv_col2):
+        converted_col1 = cv2.cvtColor(np.array([[[hsv_col1, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
+        converted_col2 = cv2.cvtColor(np.array([[[hsv_col2, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
+
+        frame = np.empty((HEIGHT, WIDTH, 3), dtype=np.uint8)
+
+        frame[: HEIGHT / 2, :, :] = converted_col1
+        frame[HEIGHT / 2:, :, :] = converted_col2
+
+        self.send_new_frame(frame)
+
+
     def black_out(self):
         self.send_new_frame(NO_FRAME)
 
@@ -117,7 +138,6 @@ class OpenCvHandler:
     def display_frame(self, frame):
         resized_frame = scm.imresize(frame, (WIDTH, HEIGHT), interp='bilinear')
         self.send_new_frame(resized_frame)
-
     def display_binary_pattern(self, color_vector):
         self._display_isoquadrant_frame(self._get_binary_quadrant(color_vector[0], color_vector[1]))
 
@@ -210,15 +230,6 @@ if __name__ == '__main__':
     test = np.zeros((1, 1, 3))
     print(test)
     sampleHandler = OpenCvHandler()
-    sampleHandler.display_binary_pattern([15, 105])
-    time.sleep(2)
-    sampleHandler.display_quaternary_pattern(np.array([[15, 45], [80, 105]]))
-    time.sleep(2)
-    sampleHandler.display_octonary_pattern(np.array([
-        [[10, 20], [30, 40]],
-        [[50, 60], [70, 80]]]),
-        1, 1,
-        0, 0
-    )
+    sampleHandler.display_binary_hsv_color_vertical(15, 105)
     # print(timeit.timeit(quatpat_wrapper, number=1))
     sampleHandler.join_waiting_thread_handler()

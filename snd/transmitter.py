@@ -150,7 +150,50 @@ class Transmitter(State_Machine):
         self.state = State.SEND
 
     def do_quadrant_feedback(self):
-        pass
+        self.sleep_n_ticks(3)
+        frame = self.cap.read_hsv_frame(write=True, caller="transmitter_quadrant_feedback")
+
+        left_half_hue = frame[:, : WIDTH / 2 - 10, 0]
+        right_half_hue = frame[:, WIDTH / 2 + 10:, 0]
+
+        left_ack_received = (
+            np.abs(self.compute_cyclic_hue_mean_to_reference(left_half_hue, S_ACK) - S_ACK)
+            <
+            np.abs(self.compute_cyclic_hue_mean_to_reference(left_half_hue, S_NO_ACK) - S_NO_ACK))
+
+        right_ack_received = (
+            np.abs(self.compute_cyclic_hue_mean_to_reference(right_half_hue, S_ACK) - S_ACK)
+            <
+            np.abs(self.compute_cyclic_hue_mean_to_reference(right_half_hue, S_NO_ACK) - S_NO_ACK))
+
+        if not left_ack_received and not right_ack_received:
+            # Horizontal screen
+            self.screen_orientation = 'horizontal'
+            self.sleep_until_next_tick()
+        elif not left_ack_received and right_ack_received:
+            self.screen_orientation = 'vertical'
+            self.sleep_until_next_tick()
+            # vertical screen
+        elif left_ack_received and not right_ack_received:
+            # ascendant screen
+            self.available_quadrants = (False, True, True, False)
+            self.state = State.SEND
+            self.sleep_until_next_tick()
+            return
+        else:
+            # descendant screen
+            self.available_quadrants = (True, False, False, True)
+            self.state = State.SEND
+            self.sleep_until_next_tick()
+            return
+
+        if self.screen_orientation == 'horizontal':
+            self.cv_handler.display_binary_hsv_color_horizontal(S_ACK, S_NO_ACK)
+        else:
+            self.cv_handler.display_binary_hsv_color_vertical(S_ACK, S_NO_ACK)
+
+        self.sleep_n_ticks(3)
+
 
     def do_send(self):
         data_packet = collections.deque()
@@ -240,10 +283,14 @@ class Transmitter(State_Machine):
     def do_get_ack(self):
 
         self.cv_handler.black_out()
-        current_time = time.time();
+        current_time = time.time()
         logging.info("ack wait time is: " + str(current_time))
 
         # wait several tick for receiver ack to account for camera delay
+        #
+        # T ... B _ B _ _ _ _ -|
+        # R ... b _ a _ _ _ _ _
+        #
         self.sleep_until_next_tick()
         self.sleep_until_next_tick()
         self.sleep_until_next_tick()

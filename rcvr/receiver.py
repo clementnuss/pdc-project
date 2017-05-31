@@ -153,7 +153,54 @@ class Receiver(State_Machine):
         self.state = State.RECEIVE
 
     def do_quadrant_feedback(self):
-        pass
+        """
+        NOACK   NOACK   = Horizontal    -> deuxieme passe
+        NOACK   ACK     = Vertical      -> deuxième passe
+        ACK     NOACK   = Ascendant     -> ok
+        ACK     ACK     = Descendant    -> ok
+        
+        Deuxième passe:
+        
+        Horizontal: ACK partie supérieure, NOACK partie inférieure
+        Vertical:   ACK partie gauche, NOACK partie droite
+        
+        :return: 
+        """
+
+        # Wait 5 ticks to account for transmitter camera delay:
+        #
+        #   calibration
+        # T .--.--.--.
+        # R           _._._._._
+
+        # First pass
+        if self.screen_orientation == 'horizontal':
+            self.cv_handler.display_binary_hsv_color_vertical(S_NO_ACK, S_NO_ACK)
+            self.sleep_n_ticks(4)
+        elif self.screen_orientation == 'vertical':
+            self.cv_handler.display_binary_hsv_color_vertical(S_NO_ACK, S_ACK)
+            self.sleep_n_ticks(4)
+        elif self.screen_orientation == 'ascendent':
+            self.cv_handler.display_binary_hsv_color_vertical(S_ACK, S_NO_ACK)
+            self.sleep_n_ticks(4)
+            self.state = State.RECEIVE
+            return
+        else:
+            self.cv_handler.display_binary_hsv_color_vertical(S_ACK, S_ACK)
+            self.sleep_n_ticks(4)
+            self.state = State.RECEIVE
+            return
+
+        # Second pass
+        ack_received = (
+            np.abs(self.get_cyclic_hue_mean_to_reference(S_ACK) - S_ACK)
+            <
+            np.abs(self.get_cyclic_hue_mean_to_reference(S_NO_ACK) - S_NO_ACK))
+
+        # Display the captured color so the transmitter knows which screen portion is available
+        self.cv_handler.display_hsv_color(S_ACK if ack_received else S_NO_ACK)
+        self.sleep_n_ticks(4)
+        self.state = State.RECEIVE
 
     def do_receive(self):
 
@@ -231,14 +278,11 @@ class Receiver(State_Machine):
 
         return bits_array
 
-    def do_check(self):
-        pass
-
     def do_validate_data(self):
         global msg
         try:
             msg, ecc = self.rs_coder.decode(self.data_packet, return_string=False)
-            data_is_valid = all(b < 128 for b in msg)
+            data_is_valid = True
         except RSCodecError:
             logging.info("Unable to correct RS errors")
             data_is_valid = False

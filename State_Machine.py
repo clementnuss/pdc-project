@@ -490,3 +490,7 @@ class State_Machine(object):
             return
 
         time.sleep(sleep_amount)
+
+    def sleep_n_ticks(self, n):
+        for i in range(n):
+            self.sleep_until_next_tick()
