@@ -175,10 +175,8 @@ class Transmitter(State_Machine):
         if not left_ack_received and not right_ack_received:
             # Horizontal screen
             self.screen_orientation = 'horizontal'
-            self.sleep_until_next_tick()
         elif not left_ack_received and right_ack_received:
             self.screen_orientation = 'vertical'
-            self.sleep_until_next_tick()
             # vertical screen
         elif left_ack_received and not right_ack_received:
             # ascendant screen

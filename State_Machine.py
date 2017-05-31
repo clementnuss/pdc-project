@@ -10,7 +10,7 @@ from utils.Symbols import *
 
 
 class State_Machine(object):
-    TRANSMISSION_RATE = 1.0 / 10.0
+    TRANSMISSION_RATE = 1.0 / 5.0
     SAMPLING_OFFSET = 1.0 / 30.0
     CONVERGENCE_BOUND_THRESHOLD = 15
     CONVERGENCE_THRESHOLD = 10000
@@ -327,7 +327,7 @@ class State_Machine(object):
         if not has_two_contours:
             # Big screen is vertical
             if (max_x1 - min_x1) < (max_y1 - min_y1):
-                self.screen_boundaries1 = (min_x1, max_x1, 0, (min_y1 + max_y1) / 2)
+                self.screen_boundaries1 = (min_x1, max_x1, min_y1, (min_y1 + max_y1) / 2)
                 self.screen_boundaries2 = (min_x1, max_x1, (min_y1 + max_y1) / 2, max_y1)
                 self.screen_orientation = 'vertical'
                 logging.info("Screen detection saw a vertical screen")

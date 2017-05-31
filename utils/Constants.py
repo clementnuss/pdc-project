@@ -1,3 +1,6 @@
+from random import randrange
+
+import logging
 import numpy as np
 
 CAMERA_WIDTH = 640
@@ -7,7 +10,8 @@ DETECTION_PROPORTION = 4.0
 
 END_OF_FILE_MARKER = 26
 
-FAKE_MASK = True
+FAKE_MASK = False
+MASK_PATTERN = randrange(0, 6)
 
 DEBUG = True
 SIMULATE = False

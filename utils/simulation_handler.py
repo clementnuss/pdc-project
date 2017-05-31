@@ -29,26 +29,27 @@ def simulate_camera_tmtr(frame):
         OOXX        XXXX        XXOO        - from top to bottom
     """
 
-    pattern = randrange(0, 6)
+    pattern = 2
+    logging.info("Selected pattern : " + str(pattern))
     if pattern == 0:
         # Vertical right
-        frame[0:CV_GUI_Handler.HEIGHT, 0:CV_GUI_Handler.WIDTH / 2, :] = 0
+        frame[:, 0:CV_GUI_Handler.WIDTH / 2, :] = 0
     elif pattern == 1:
-        # Vertical right
-        frame[0:CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH / 2:, :] = 0
+        # Vertical left
+        frame[:, CV_GUI_Handler.WIDTH / 2:, :] = 0
     elif pattern == 2:
         # Horizontal Bottom
-        frame[0:CV_GUI_Handler.HEIGHT / 2, CV_GUI_Handler.HEIGHT:, :] = 0
+        frame[0:CV_GUI_Handler.HEIGHT / 2, :, :] = 0
     elif pattern == 3:
         # Horizontal Top
-        frame[CV_GUI_Handler.HEIGHT / 2: CV_GUI_Handler.HEIGHT, :, :] = 0
+        frame[CV_GUI_Handler.HEIGHT / 2:, :, :] = 0
     elif pattern == 4:
         # Ascendant
         frame[0:CV_GUI_Handler.HEIGHT / 2 + 1, 0:CV_GUI_Handler.WIDTH / 2 + 1, :] = 0
-        frame[CV_GUI_Handler.HEIGHT / 2: CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH / 2: CV_GUI_Handler.WIDTH, :] = 0
+        frame[CV_GUI_Handler.HEIGHT / 2 - 1:, CV_GUI_Handler.WIDTH / 2 - 1:, :] = 0
     elif pattern == 5:
         frame[0:CV_GUI_Handler.HEIGHT / 2, CV_GUI_Handler.WIDTH / 2 - 1:, :] = 0
-        frame[CV_GUI_Handler.HEIGHT / 2: CV_GUI_Handler.HEIGHT, 0: CV_GUI_Handler.WIDTH / 2 + 1, :] = 0
+        frame[CV_GUI_Handler.HEIGHT / 2: , 0: CV_GUI_Handler.WIDTH / 2 + 1, :] = 0
 
     scaled_frame = frame[::10, ::10]
 

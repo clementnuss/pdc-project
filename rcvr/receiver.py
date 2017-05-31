@@ -190,7 +190,7 @@ class Receiver(State_Machine):
             self.sleep_n_ticks(4)
             self.state = State.RECEIVE
             return
-        else:
+        elif self.screen_orientation == 'descendant':
             self.cv_handler.display_binary_hsv_color_vertical(S_ACK, S_ACK)
             logging.info("Receiver sent feedback, is descendant")
             self.sleep_n_ticks(4)
