@@ -181,12 +181,14 @@ class Transmitter(State_Machine):
         elif left_ack_received and not right_ack_received:
             # ascendant screen
             self.available_quadrants = (False, True, True, False)
+            logging.info("Transmitter received feedback, is ascendant")
             self.state = State.SEND
             self.sleep_until_next_tick()
             return
         else:
             # descendant screen
             self.available_quadrants = (True, False, False, True)
+            logging.info("Transmitter received feedback, is descendant")
             self.state = State.SEND
             self.sleep_until_next_tick()
             return

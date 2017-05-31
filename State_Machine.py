@@ -74,7 +74,7 @@ class State_Machine(object):
                     superimpose(self.NO_ACK_MASK, np.uint8(mask[::10, ::10])[..., np.newaxis]))
             time.sleep(0.2)
 
-        print("Synchronization OK")
+        logging.info("Synchronization OK")
 
         self.SYMBOL_ZERO_MASK = self.SYMBOL_ZERO_MASK * self.screen_mask
         self.SYMBOL_ONE_MASK = self.SYMBOL_ONE_MASK * self.screen_mask
@@ -145,16 +145,16 @@ class State_Machine(object):
                                 cntmin_y < CAMERA_HEIGHT / DETECTION_PROPORTION or
                                 cntmax_x > (CAMERA_WIDTH - CAMERA_WIDTH / DETECTION_PROPORTION) or
                                 cntmax_y > (CAMERA_HEIGHT - CAMERA_HEIGHT / DETECTION_PROPORTION)):
-                        print("Skipping contour, out of bounds")
+                        logging.info("Skipping contour, out of bounds")
                         continue
 
-                    print("Contour area: " + str(area))
+                    logging.info("Contour area: " + str(area))
                     if 30000 > area > (4000 if Constants.SIMULATE else 400) and cv2.isContourConvex(cnt):
                         if area > max_area:
                             max_area = area
                             most_beautiful_contour = cnt
                     else:
-                        print("Contour dropped because it dit not fit size requirements")
+                        logging.info("Contour dropped because it dit not fit size requirements")
 
                 if most_beautiful_contour is not None:
                     # cv2.drawContours(frame, [most_beautiful_contour], -1, (255, 255, 255), thickness=2)
@@ -196,6 +196,7 @@ class State_Machine(object):
         max_iteration = 30
 
         converged = False
+        has_two_contours = False
         contour1_converged = False
         contour2_converged = False
 
@@ -248,10 +249,10 @@ class State_Machine(object):
                                 cntmin_y < CAMERA_HEIGHT / DETECTION_PROPORTION or
                                 cntmax_x > (CAMERA_WIDTH - CAMERA_WIDTH / DETECTION_PROPORTION) or
                                 cntmax_y > (CAMERA_HEIGHT - CAMERA_HEIGHT / DETECTION_PROPORTION)):
-                        print("Skipping contour, out of bounds")
+                        logging.info("Skipping contour, out of bounds")
                         continue
 
-                    print("Contour area: " + str(area))
+                    logging.info("Contour area: " + str(area))
                     if 30000 > area > typical_small_contour_size and cv2.isContourConvex(cnt):
                         if area > max_area2:
                             if area > max_area1 and max_area2 != 0:
@@ -261,7 +262,8 @@ class State_Machine(object):
                                 max_area2 = area
                                 best_contour2 = cnt
                     else:
-                        print("Contour dropped because did not fit requirements: " + str(cv2.isContourConvex(cnt)))
+                        logging.info(
+                            "Contour dropped because did not fit requirements: " + str(cv2.isContourConvex(cnt)))
 
                 if best_contour1 is not None:
                     cv2.drawContours(frame, [best_contour1], -1, (255, 255, 255), thickness=2)
@@ -277,10 +279,10 @@ class State_Machine(object):
                         contour1 = (min_x1, max_x1, min_y1, max_y1)
                         cv2.rectangle(frame, (min_x1, min_y1), (max_x1, max_y1), (0, 255, 0), thickness=2)
                         cv2.imwrite('../contour1_' + self.name + '.jpg', frame)
-                        print("Contour 1 converged")
+                        logging.info("Contour 1 converged")
                     else:
                         contour1_converged = False
-                        print("Contour 1 Not converged yet")
+                        logging.info("Contour 1 Not converged yet")
 
                     min_x1, max_x1, min_y1, max_y1 = newmin_x + 1, newmax_x, newmin_y + 1, newmax_y
 
@@ -298,39 +300,46 @@ class State_Machine(object):
                         contour2 = (min_x2, max_x2, min_y2, max_y2)
                         cv2.rectangle(frame, (min_x2, min_y2), (max_x2, max_y2), (0, 0, 255), thickness=2)
                         cv2.imwrite('../contour2_' + self.name + '.jpg', frame)
-                        print("Contour 2 converged")
+                        logging.info("Contour 2 converged")
                     else:
-                        print("Contour 2 Not converged yet")
+                        logging.info("Contour 2 Not converged yet")
                         contour2_converged = False
 
                     min_x2, max_x2, min_y2, max_y2 = newmin_x + 1, newmax_x, newmin_y + 1, newmax_y
 
-                if contour1_converged and max_area1 >= 2 * typical_small_contour_size:
+                if contour1_converged and contour2_converged:
                     converged = True
-                    print("Screen detection converged with 1 contour")
-                elif contour1_converged and contour2_converged:
+                    has_two_contours = True
+                    logging.info("Screen detection converged with 2 contours")
+                elif (contour1_converged and max_area1 >= 2 * typical_small_contour_size):
                     converged = True
-                    print("Screen detection converged with 2 contours")
+                    logging.info("Screen detection converged with 1 contour")
+                elif (contour2_converged and max_area2 >= 2 * typical_small_contour_size):
+                    converged = True
+                    # Put information of contour 2 into contour 1 for later computations
+                    contour1 = contour2
+                    min_x1, max_x1, min_y1, max_y1 = contour1
+                    logging.info("Screen detection converged with 1 contour")
                 else:
                     converged = False
 
         # Only 1 big screen
-        if not contour2_converged:
+        if not has_two_contours:
             # Big screen is vertical
             if (max_x1 - min_x1) < (max_y1 - min_y1):
                 self.screen_boundaries1 = (min_x1, max_x1, 0, (min_y1 + max_y1) / 2)
-                self.screen_boundaries1 = (min_x1, max_x1, (min_y1 + max_y1) / 2, max_y1)
+                self.screen_boundaries2 = (min_x1, max_x1, (min_y1 + max_y1) / 2, max_y1)
                 self.screen_orientation = 'vertical'
+                logging.info("Screen detection saw a vertical screen")
             # Big screen is horizontal
             else:
                 self.screen_boundaries1 = (min_x1, (min_x1 + max_x1) / 2, min_y1, max_y1)
                 self.screen_boundaries2 = ((min_x1 + max_x1) / 2, max_x1, min_y1, max_y1)
                 self.screen_orientation = 'horizontal'
-            self.screen_boundaries2 = None
+                logging.info("Screen detection saw a horizontal screen")
 
         # 2 contours in diagonal
         else:
-
             if min_x2 < min_x1:
                 tmp = contour1
                 contour1 = contour2
