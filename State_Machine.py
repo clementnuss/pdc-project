@@ -328,11 +328,11 @@ class State_Machine(object):
         elif (min_x1 + max_x1) / 2.0 < (min_x2 + max_x2) / 2.0:
             self.screen_boundaries1 = (min_x1, max_x1, min_y1, max_y1)
             self.screen_boundaries2 = (min_x2, max_x2, min_y2, max_y2)
-            self.screen_orientation = 'ascendent'
+            self.screen_orientation = 'ascendant'
         else:
             self.screen_boundaries2 = (min_x1, max_x1, min_y1, max_y1)
             self.screen_boundaries1 = (min_x2, max_x2, min_y2, max_y2)
-            self.screen_orientation = 'descendent'
+            self.screen_orientation = 'descendant'
 
     def _get_contour_bounds(self, contour):
         return (
@@ -429,7 +429,7 @@ class State_Machine(object):
         return self._compute_mean(self, frame, 0)
 
     def get_cyclic_hue_mean_to_reference(self, ref):
-        if Constants.USE_AKIMBO_SCREEN:
+        if Constants.USE_AKIMBO_SCREEN and self.name == 'Receiver':
             frame1, frame2 = self.cap.readHSVFrame_akimbo()
             return np.array(self.compute_cyclic_hue_mean_to_reference(frame1, ref),
                             self.compute_cyclic_hue_mean_to_reference(frame2, ref)).mean()

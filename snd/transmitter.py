@@ -192,8 +192,24 @@ class Transmitter(State_Machine):
         else:
             self.cv_handler.display_binary_hsv_color_vertical(S_ACK, S_NO_ACK)
 
-        self.sleep_n_ticks(3)
+        # Sleep for the receiver to read the second pattern
+        self.sleep_until_next_tick()
 
+        # Sleep to wait before reading receiver's answer
+        self.sleep_n_ticks(3)
+        ack_received = (
+            np.abs(self.get_cyclic_hue_mean_to_reference(S_ACK) - S_ACK)
+            <
+            np.abs(self.get_cyclic_hue_mean_to_reference(S_NO_ACK) - S_NO_ACK))
+
+        if ack_received and self.screen_orientation == 'horizontal':
+            self.available_quadrants = (True, True, False, False)
+        elif ack_received and self.screen_orientation == 'vertical':
+            self.available_quadrants = (True, False, True, False)
+        elif not ack_received and self.screen_orientation == 'horizontal':
+            self.available_quadrants = (False, False, True, True)
+        else:
+            self.available_quadrants = (False, True, False, True)
 
     def do_send(self):
         data_packet = collections.deque()

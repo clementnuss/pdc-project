@@ -180,7 +180,7 @@ class Receiver(State_Machine):
         elif self.screen_orientation == 'vertical':
             self.cv_handler.display_binary_hsv_color_vertical(S_NO_ACK, S_ACK)
             self.sleep_n_ticks(4)
-        elif self.screen_orientation == 'ascendent':
+        elif self.screen_orientation == 'ascendant':
             self.cv_handler.display_binary_hsv_color_vertical(S_ACK, S_NO_ACK)
             self.sleep_n_ticks(4)
             self.state = State.RECEIVE
@@ -191,6 +191,7 @@ class Receiver(State_Machine):
             self.state = State.RECEIVE
             return
 
+        self.sleep_until_next_tick()
         # Second pass
         ack_received = (
             np.abs(self.get_cyclic_hue_mean_to_reference(S_ACK) - S_ACK)
@@ -222,7 +223,7 @@ class Receiver(State_Machine):
                 bits_array[
                 start_idx + Constants.NUM_BITS_PER_QUADRANT: start_idx + Constants.NUM_BITS_PER_SYMBOL] = self._read_quadrant_symbols(
                     frame2)
-                #logging.info("detected symbol: " + str(bits_array[start_idx:start_idx + Constants.NUM_BITS_PER_SYMBOL]))
+                # logging.info("detected symbol: " + str(bits_array[start_idx:start_idx + Constants.NUM_BITS_PER_SYMBOL]))
 
             else:
                 frame = self.cap.readHSVFrame()

@@ -1,4 +1,5 @@
 import threading
+from time import sleep
 
 import cv2
 import numpy as np
@@ -81,15 +82,16 @@ class OpenCvHandler:
         else:
             self.instance.refresh = True
 
-        new_frame[QUADRANT_HEIGHT:, QUADRANT_WIDTH:, :] = 0
-        new_frame[0:QUADRANT_HEIGHT, 0:QUADRANT_WIDTH, :] = 0
+        if Constants.FAKE_MASK and not Constants.SIMULATE:
+            new_frame[QUADRANT_HEIGHT:, QUADRANT_WIDTH:, :] = 0
+            new_frame[0:QUADRANT_HEIGHT, 0:QUADRANT_WIDTH, :] = 0
 
-        new_frame[0:5, :, :] = 0
-        new_frame[QUADRANT_HEIGHT - 5: QUADRANT_HEIGHT + 5, :, :] = 0
-        new_frame[HEIGHT - 5:HEIGHT, :, :] = 0
-        new_frame[:, 0:5, :] = 0
-        new_frame[:, QUADRANT_WIDTH - 12: QUADRANT_WIDTH + 12, :] = 0
-        new_frame[:, WIDTH - 5: WIDTH, :] = 0
+            new_frame[0:5, :, :] = 0
+            new_frame[QUADRANT_HEIGHT - 5: QUADRANT_HEIGHT + 5, :, :] = 0
+            new_frame[HEIGHT - 5:HEIGHT, :, :] = 0
+            new_frame[:, 0:5, :] = 0
+            new_frame[:, QUADRANT_WIDTH - 12: QUADRANT_WIDTH + 12, :] = 0
+            new_frame[:, WIDTH - 5: WIDTH, :] = 0
 
         self.instance.new_frame = new_frame
 
@@ -241,5 +243,7 @@ if __name__ == '__main__':
     print(test)
     sampleHandler = OpenCvHandler()
     sampleHandler.display_binary_hsv_color_vertical(15, 105)
+    sleep(2)
+    sampleHandler.display_binary_hsv_color_horizontal(15, 105)
     # print(timeit.timeit(quatpat_wrapper, number=1))
     sampleHandler.join_waiting_thread_handler()
