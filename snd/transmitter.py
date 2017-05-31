@@ -154,6 +154,8 @@ class Transmitter(State_Machine):
         self.sleep_n_ticks(3)
         frame = self.cap.readHSVFrame(write=True, caller="transmitter_quadrant_feedback")
 
+        self.state = State.SEND
+
         half_sep = int(frame.shape[1] / 2)
         margin = int(frame.shape[1] * 0.05)
 
@@ -270,24 +272,21 @@ class Transmitter(State_Machine):
             symbols_array[i] = symbol_index
             """
 
-        # Added a wait to account for the generation of the first symbol on the receiver side
+        # Added a wait to account for the generation of the first symbol on the transmitter side
         self.sleep_until_next_tick()
-        startframe = time.time()
         for i in range(0, Constants.NUM_SYMBOLS_PER_DATA_PACKET):
-            frame = self._generate_frame(
+            quadrant1, quadrant2 = self._generate_bgr_quadrants(
                 bits_array[i * Constants.NUM_BITS_PER_SYMBOL: (i + 1) * Constants.NUM_BITS_PER_SYMBOL])
-            self.cv_handler.send_new_frame(cv2.cvtColor(frame, cv2.COLOR_HSV2BGR))
+            self.cv_handler.display_biquadrant_frame(quadrant1, quadrant2,
+                                                     self.available_quadrants[0], self.available_quadrants[1],
+                                                     self.available_quadrants[2], self.available_quadrants[3])
 
-            logging.info("Time needed for a frame : " + str(time.time() - startframe))
-            startframe = time.time()
             State_Machine.sleep_until_next_tick(self)
 
-    def _generate_frame(self, data: np.array):
-
-        frame = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
-        frame[QUADRANT_HEIGHT:, 0: QUADRANT_WIDTH] = self._generate_quadrant(data[0:Constants.NUM_BITS_PER_QUADRANT])
-        frame[0:QUADRANT_HEIGHT, QUADRANT_WIDTH:] = self._generate_quadrant(data[Constants.NUM_BITS_PER_QUADRANT:])
-        return frame
+    def _generate_bgr_quadrants(self, data: np.array):
+        quadrant1 = cv2.cvtColor(self._generate_quadrant(data[0:Constants.NUM_BITS_PER_QUADRANT]), cv2.COLOR_HSV2BGR)
+        quadrant2 = cv2.cvtColor(self._generate_quadrant(data[Constants.NUM_BITS_PER_QUADRANT:]), cv2.COLOR_HSV2BGR)
+        return quadrant1, quadrant2
 
     def _generate_quadrant(self, data_for_quadrant: np.array):
 

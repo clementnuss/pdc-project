@@ -216,7 +216,7 @@ class Receiver(State_Machine):
         self.cv_handler.display_hsv_color(140)
 
         bits_array = np.zeros(Constants.NUM_SYMBOLS_PER_DATA_PACKET * Constants.NUM_BITS_PER_SYMBOL, dtype=np.bool)
-        # Added a wait to account for the generation of the first symbol on the receiver side
+        # Added a wait to account for the generation of the first symbol on the transmitter side
         self.sleep_until_next_tick()
 
         for i in range(0, Constants.NUM_SYMBOLS_PER_DATA_PACKET):

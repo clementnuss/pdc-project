@@ -1,6 +1,7 @@
 import logging
 import sys
 import threading
+from random import randrange
 from time import sleep
 
 import cv2
@@ -9,7 +10,7 @@ import scipy.misc as scm
 from typing import Tuple
 
 from cv import CV_GUI_Handler, CV_Video_Capture_Handler
-from cv.CV_GUI_Handler import OpenCvHandler, NO_FRAME
+from cv.CV_GUI_Handler import OpenCvHandler, NO_FRAME, WIDTH, HEIGHT
 from cv.ImageProcessing import crop
 from rcvr import receiver
 from snd import transmitter
@@ -18,9 +19,37 @@ from utils import Constants
 run_flag1 = True
 run_flag2 = True
 
+
 def simulate_camera_tmtr(frame):
-    frame[0:CV_GUI_Handler.HEIGHT / 2 + 1, 0:CV_GUI_Handler.WIDTH / 2 + 1, :] = 0
-    frame[CV_GUI_Handler.HEIGHT / 2: CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH / 2: CV_GUI_Handler.WIDTH, :] = 0
+    """
+    Pattern description:
+    0 - XXOO    2 - XXXX    4 - XXOO    Quadrants are distributed as follow:
+        XXOO        OOOO        OOXX        - from left to right
+    1 - OOXX    3 - OOOO    5 - OOXX    if on the same column:     
+        OOXX        XXXX        XXOO        - from top to bottom
+    """
+
+    pattern = randrange(0, 6)
+    if pattern == 0:
+        # Vertical right
+        frame[0:CV_GUI_Handler.HEIGHT, 0:CV_GUI_Handler.WIDTH / 2, :] = 0
+    elif pattern == 1:
+        # Vertical right
+        frame[0:CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH / 2:, :] = 0
+    elif pattern == 2:
+        # Horizontal Bottom
+        frame[0:CV_GUI_Handler.HEIGHT / 2, CV_GUI_Handler.HEIGHT:, :] = 0
+    elif pattern == 3:
+        # Horizontal Top
+        frame[CV_GUI_Handler.HEIGHT / 2: CV_GUI_Handler.HEIGHT, :, :] = 0
+    elif pattern == 4:
+        # Ascendant
+        frame[0:CV_GUI_Handler.HEIGHT / 2 + 1, 0:CV_GUI_Handler.WIDTH / 2 + 1, :] = 0
+        frame[CV_GUI_Handler.HEIGHT / 2: CV_GUI_Handler.HEIGHT, CV_GUI_Handler.WIDTH / 2: CV_GUI_Handler.WIDTH, :] = 0
+    elif pattern == 5:
+        frame[0:CV_GUI_Handler.HEIGHT / 2, CV_GUI_Handler.WIDTH / 2 - 1:, :] = 0
+        frame[CV_GUI_Handler.HEIGHT / 2: CV_GUI_Handler.HEIGHT, 0: CV_GUI_Handler.WIDTH / 2 + 1, :] = 0
+
     scaled_frame = frame[::10, ::10]
 
     scaled_frame = np.uint8(np.clip(scaled_frame, (0, 0, 0), (255, 255, 255)))
@@ -48,6 +77,7 @@ def simulate_camera_rcvr(frame):
         return camera_frame
     camera_frame[80:80 + scaled_frame.shape[0], 5:5 + scaled_frame.shape[1]] = scaled_frame
     return camera_frame
+
 
 class SimulationHandler:
     class __SimulationHandler:
@@ -129,13 +159,44 @@ class SimulationHandler:
             frame[: CV_GUI_Handler.HEIGHT / 2, :, :] = converted_col1
             frame[CV_GUI_Handler.HEIGHT / 2:, :, :] = converted_col2
 
+        def display_biquadrant_frame(self, quadrant1, quadrant2, top_left, top_right, bottom_left, bottom_right):
+            """
+            Pattern description:
+            0 - XXOO    2 - XXXX    4 - XXOO    Quadrants are distributed as follow:
+                XXOO        OOOO        OOXX        - from left to right
+            1 - OOXX    3 - OOOO    5 - OOXX    if on the same column:     
+                OOXX        XXXX        XXOO        - from top to bottom
+            """
+            frame = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
+
+            if top_left and bottom_left:
+                frame[0: HEIGHT / 2, 0: WIDTH / 2, :] = quadrant1  # top left quadrant
+                frame[HEIGHT / 2: HEIGHT, 0: WIDTH / 2, :] = quadrant2  # bottom left quadrant
+
+            elif top_right and bottom_right:
+                frame[0: HEIGHT / 2, WIDTH / 2: WIDTH] = quadrant1  # top right quadrant
+                frame[HEIGHT / 2: HEIGHT, WIDTH / 2: WIDTH, :] = quadrant2  # bottom right quadrant
+
+            elif top_left and top_right:
+                frame[0: HEIGHT / 2, 0: WIDTH / 2, :] = quadrant1  # top left quadrant
+                frame[0: HEIGHT / 2, WIDTH / 2: WIDTH] = quadrant2  # top right quadrant
+
+            elif bottom_left and bottom_right:
+                frame[HEIGHT / 2: HEIGHT, 0: WIDTH / 2, :] = quadrant1  # bottom left quadrant
+                frame[HEIGHT / 2: HEIGHT, WIDTH / 2: WIDTH, :] = quadrant2  # bottom right quadrant
+
+            elif top_left and bottom_right:
+                frame[0: HEIGHT / 2, 0: WIDTH / 2, :] = quadrant1  # top left quadrant
+                frame[HEIGHT / 2: HEIGHT, WIDTH / 2: WIDTH, :] = quadrant2  # bottom right quadrant
+
+            elif bottom_left and top_right:
+                frame[0: HEIGHT / 2, WIDTH / 2: WIDTH] = quadrant2  # top right quadrant
+                frame[HEIGHT / 2: HEIGHT, 0: WIDTH / 2, :] = quadrant1  # bottom left quadrant
+
+            self.send_new_frame(frame)
+
         def black_out(self):
             self.send_new_frame(NO_FRAME)
-
-        def display_hsv_frame(self, hsvframe):
-            resized_frame = scm.imresize(hsvframe, (Constants.CAMERA_WIDTH, Constants.CAMERA_HEIGHT), interp='bilinear')
-            resized_frame = cv2.cvtColor(resized_frame, cv2.COLOR_HSV2BGR)
-            self.send_new_frame(resized_frame)
 
         def readHSVFrame(self, write=False, caller='') -> np.ndarray:
             ret, frame = True, SimulationHandler.instance.rcvr.frame

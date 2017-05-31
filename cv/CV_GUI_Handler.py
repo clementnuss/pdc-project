@@ -161,9 +161,9 @@ class OpenCvHandler:
 
         quadrant1 = self._get_quaternary_quadrant(color_matrices_vector[0])
         quadrant2 = self._get_quaternary_quadrant(color_matrices_vector[1])
-        self._display_biquadrant_frame(quadrant1, quadrant2,
-                                       top_left, top_right,
-                                       bottom_left, bottom_right)
+        self.display_biquadrant_frame(quadrant1, quadrant2,
+                                      top_left, top_right,
+                                      bottom_left, bottom_right)
 
     def _display_isoquadrant_frame(self, quadrant):
         frame = np.empty((HEIGHT, WIDTH, 3), dtype=np.uint8)
@@ -176,7 +176,7 @@ class OpenCvHandler:
 
         self.display_hsv_frame(frame)
 
-    def _display_biquadrant_frame(self, quadrant1, quadrant2, top_left, top_right, bottom_left, bottom_right):
+    def display_biquadrant_frame(self, quadrant1, quadrant2, top_left, top_right, bottom_left, bottom_right):
         """
         Pattern description:
         0 - XXOO    2 - XXXX    4 - XXOO    Quadrants are distributed as follow:
