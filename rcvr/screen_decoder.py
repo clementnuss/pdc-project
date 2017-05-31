@@ -1,7 +1,7 @@
 import time
 
 import cv2
-
+import cv.CV_Video_Capture_Handler
 import cv.CV_GUI_Handler
 from utils.Constants import *
 

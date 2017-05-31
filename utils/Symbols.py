@@ -30,14 +30,7 @@ SYMBOLS[0] = np.uint8(10)
 SYMBOLS[1] = np.uint8(20)
 SYMBOLS[2] = np.uint8(30)
 SYMBOLS[3] = np.uint8(50)
-SYMBOLS[4] = np.uint8(80)
+SYMBOLS[4] = np.uint8(90)
 SYMBOLS[5] = np.uint8(110)
-SYMBOLS[6] = np.uint8(140)
-SYMBOLS[7] = np.uint8(170)
-
-FEEDBACK_SYMBOLS = np.zeros((4), dtype=np.uint8)
-
-FEEDBACK_SYMBOLS[0] = np.uint(10)
-FEEDBACK_SYMBOLS[1] = np.uint()
-FEEDBACK_SYMBOLS[2]
-FEEDBACK_SYMBOLS[3]
+SYMBOLS[6] = np.uint8(150)
+SYMBOLS[7] = np.uint8(165)

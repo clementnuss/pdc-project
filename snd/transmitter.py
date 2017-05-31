@@ -5,9 +5,9 @@ from enum import Enum
 import unireedsolomon
 
 from State_Machine import *
+from utils import Constants
 from cv.CV_GUI_Handler import HEIGHT, WIDTH, QUADRANT_HORIZONTAL_CELL_START, QUADRANT_VERTICAL_CELL_START, \
     NUM_HORIZONTAL_CELLS, CELL_WIDTH, CELL_HEIGHT, QUADRANT_WIDTH, QUADRANT_HEIGHT
-from utils import Constants
 from utils.Symbols import *
 
 logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=logging.INFO)
