@@ -123,8 +123,9 @@ class OpenCvHandler:
 
         frame = np.empty((HEIGHT, WIDTH, 3), dtype=np.uint8)
 
-        frame[: HEIGHT / 2, :, :] = converted_col1
-        frame[HEIGHT / 2:, :, :] = converted_col2
+        half_height = int(HEIGHT / 2)
+        frame[: half_height, :, :] = converted_col1
+        frame[half_height:, :, :] = converted_col2
 
         self.send_new_frame(frame)
 

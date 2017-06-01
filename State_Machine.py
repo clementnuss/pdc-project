@@ -87,8 +87,8 @@ class State_Machine(object):
         value_target = 255
 
         max_delta_hue = 20
-        max_delta_saturation = 180
-        max_delta_value = 150
+        max_delta_saturation = 155
+        max_delta_value = 124
 
         min_x = min_y = max_x = max_y = 0
 
@@ -127,7 +127,7 @@ class State_Machine(object):
 
             logging.info("Got " + str(len(contours)) + " contours")
 
-            if 10 > len(contours) > 0:
+            if 100 > len(contours) > 0:
 
                 # Filter contours
                 most_beautiful_contour = None

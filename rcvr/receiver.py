@@ -184,11 +184,11 @@ class Receiver(State_Machine):
         if self.screen_orientation == 'horizontal':
             self.cv_handler.display_binary_hsv_color_vertical(S_NO_ACK, S_NO_ACK)
             logging.info("Receiver sent feedback, is horizontal")
-            self.sleep_n_ticks(4)
+            self.sleep_n_ticks(5)
         elif self.screen_orientation == 'vertical':
             self.cv_handler.display_binary_hsv_color_vertical(S_NO_ACK, S_ACK)
             logging.info("Receiver sent feedback, is vertical")
-            self.sleep_n_ticks(4)
+            self.sleep_n_ticks(5)
         elif self.screen_orientation == 'ascendant':
             self.cv_handler.display_binary_hsv_color_vertical(S_ACK, S_NO_ACK)
             logging.info("Receiver sent feedback, is ascendant")
@@ -210,7 +210,7 @@ class Receiver(State_Machine):
         # Display the captured color so the transmitter knows which screen portion is available
         self.cv_handler.display_hsv_color(S_ACK if ack_received else S_NO_ACK)
         logging.info("Receiver told transmitter: " + str(ack_received))
-        self.sleep_n_ticks(5)
+        self.sleep_n_ticks(6)
 
     def do_receive(self):
 

@@ -60,7 +60,7 @@ class Transmitter(State_Machine):
             elif self.state == State.QUADRANT_FEEDBACK:
                 self.do_quadrant_feedback()
             elif self.state == State.SEND:
-                if len(self.byte_sequence) > 0:
+                if len(self.byte_sequence) > 0 or not self.receiver_ack:
                     self.do_send()
                 else:
                     logging.info("Transmission finished")
@@ -198,12 +198,12 @@ class Transmitter(State_Machine):
             self.cv_handler.display_binary_hsv_color_vertical(S_ACK, S_NO_ACK)
 
         # Sleep for the receiver to read the second pattern
-        self.sleep_n_ticks(2)
+        self.sleep_n_ticks(3)
 
         self.cv_handler.black_out()
 
         # Sleep to wait before reading receiver's answer
-        self.sleep_n_ticks(3)
+        self.sleep_n_ticks(4)
 
         frame = self.cap.readHSVFrame()
         ack_received = (
@@ -365,7 +365,8 @@ class Transmitter(State_Machine):
 
         hue_mean = np.round(hue_mean / 3.0)
         logging.info("hue mean for no ack calibration was: " + str(hue_mean))
-        Constants.S_NO_ACK = np.round(hue_mean)
+        global S_NO_ACK
+        S_NO_ACK = np.uint8(np.round(hue_mean))
 
     def _calibrate_acks(self):
         hue_mean = 0.0
@@ -376,7 +377,8 @@ class Transmitter(State_Machine):
 
         hue_mean = np.round(hue_mean / 3.0)
         logging.info("hue mean for ack calibration was: " + str(hue_mean))
-        Constants.S_ACK = np.round(hue_mean)
+        global S_ACK
+        S_ACK = np.uint8(np.round(hue_mean))
 
     def _load_file(self, file_name):
 

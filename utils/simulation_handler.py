@@ -29,7 +29,7 @@ def simulate_camera_tmtr(frame):
         OOXX        XXXX        XXOO        - from top to bottom
     """
 
-    pattern = Constants.MASK_PATTERN
+    pattern = 2
     logging.info("Selected pattern : " + str(pattern))
     if pattern == 0:
         # Vertical right
