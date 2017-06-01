@@ -3,7 +3,6 @@ import sys
 from enum import Enum
 
 import unireedsolomon
-import winsound
 
 from State_Machine import *
 from cv.CV_GUI_Handler import HEIGHT, WIDTH
@@ -301,7 +300,8 @@ class Transmitter(State_Machine):
             cell_start_y = QUADRANT_VERTICAL_CELL_START[int(i / NUM_HORIZONTAL_CELLS)]
             cell_start_x = QUADRANT_HORIZONTAL_CELL_START[i % NUM_HORIZONTAL_CELLS]
             symbol = np.zeros(8, dtype=np.bool)
-            symbol[5:8] = data_for_quadrant[i * 3: (i + 1) * 3]
+            symbol[8 - Constants.NUM_BITS_PER_COLOR:8] = data_for_quadrant[i * Constants.NUM_BITS_PER_COLOR: (
+                                                                                                             i + 1) * Constants.NUM_BITS_PER_COLOR]
             quadrant[cell_start_y:cell_start_y + CELL_HEIGHT, cell_start_x:cell_start_x + CELL_WIDTH] = \
                 [SYMBOLS[np.packbits(symbol)], 255, 255]
             logging_res[i] = np.packbits(symbol)

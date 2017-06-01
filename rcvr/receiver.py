@@ -6,9 +6,9 @@ import unireedsolomon
 from unireedsolomon import RSCodecError
 
 from State_Machine import *
-from utils.Constants import NUM_HORIZONTAL_CELLS
 from cv.ImageProcessing import *
 from utils import Constants
+from utils.Constants import NUM_HORIZONTAL_CELLS
 from utils.Symbols import *
 
 logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=logging.INFO)
@@ -122,7 +122,7 @@ class Receiver(State_Machine):
         # Transmitter screen has blacked out
         value_mean = self.get_value_mean()
         # logging.info("value mean: " + str(value_mean))
-        if value_mean < 100:
+        if value_mean < 120:
             logging.info("Value mean was: " + str(value_mean))
             current_time = time.time()
             self.clock_start = current_time + State_Machine.SAMPLING_OFFSET
@@ -143,10 +143,11 @@ class Receiver(State_Machine):
                 tmp_hue = State_Machine.get_cyclic_hue_mean_to_reference(self, SYMBOLS[i])
                 hue_mean += tmp_hue
                 self.cv_handler.display_hsv_color(tmp_hue)
+                logging.info("hue mean : " + str(tmp_hue))
                 State_Machine.sleep_until_next_tick(self)
 
             hue_mean = np.round(hue_mean / 3.0)
-            logging.info("hue mean : " + str(hue_mean))
+            logging.info("hue mean after 3 iterations : " + str(hue_mean))
             SYMBOLS[i] = np.round(hue_mean)
 
         for i in range(0, NUM_SYMBOLS):
@@ -252,11 +253,11 @@ class Receiver(State_Machine):
                     num_unset_bits = 8 - (NUM_BITS_PER_COLOR - num_unset_bits)
                 """
 
-            if i == 29:
+            if i == Constants.NUM_SYMBOLS_PER_DATA_PACKET - 3:
                 self.cv_handler.display_hsv_color(30)
-            if i == 30:
+            if i == Constants.NUM_SYMBOLS_PER_DATA_PACKET - 2:
                 self.cv_handler.display_hsv_color(55)
-            if i == 31:
+            if i == Constants.NUM_SYMBOLS_PER_DATA_PACKET - 1:
                 self.cv_handler.display_hsv_color(0)
 
             if not i == Constants.NUM_SYMBOLS_PER_DATA_PACKET - 1:
@@ -274,7 +275,7 @@ class Receiver(State_Machine):
         for i in range(0, Constants.NUM_CELLS_PER_QUADRANT):
             cell_start_y = int(int(i / NUM_HORIZONTAL_CELLS) * cell_height)
             cell_start_x = int(int(i % NUM_HORIZONTAL_CELLS) * cell_width)
-            cell_margin = 3
+            cell_margin = 5
             subcell = quadrant_frame[cell_margin + cell_start_y:int(cell_start_y + cell_height - cell_margin),
                       cell_margin + cell_start_x:int(cell_start_x + cell_width - cell_margin), :].copy()
 
@@ -292,7 +293,7 @@ class Receiver(State_Machine):
         global msg
         try:
             msg, ecc = self.rs_coder.decode(self.data_packet, return_string=False)
-            data_is_valid = True
+            data_is_valid = all(b < 128 for b in msg)
         except RSCodecError:
             logging.info("Unable to correct RS errors")
             data_is_valid = False
