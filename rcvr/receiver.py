@@ -209,7 +209,7 @@ class Receiver(State_Machine):
         # Display the captured color so the transmitter knows which screen portion is available
         self.cv_handler.display_hsv_color(S_ACK if ack_received else S_NO_ACK)
         logging.info("Receiver told transmitter: " + str(ack_received))
-        self.sleep_n_ticks(4)
+        self.sleep_n_ticks(5)
 
     def do_receive(self):
 

@@ -176,8 +176,8 @@ class Transmitter(State_Machine):
             # Horizontal screen
             self.screen_orientation = 'horizontal'
         elif not left_ack_received and right_ack_received:
-            self.screen_orientation = 'vertical'
             # vertical screen
+            self.screen_orientation = 'vertical'
         elif left_ack_received and not right_ack_received:
             # ascendant screen
             self.available_quadrants = (False, True, True, False)
@@ -191,13 +191,16 @@ class Transmitter(State_Machine):
             self.sleep_until_next_tick()
             return
 
+        logging.info("Transmitter received feedback, is " + str(self.screen_orientation))
+
         if self.screen_orientation == 'horizontal':
             self.cv_handler.display_binary_hsv_color_horizontal(S_ACK, S_NO_ACK)
         else:
             self.cv_handler.display_binary_hsv_color_vertical(S_ACK, S_NO_ACK)
 
         # Sleep for the receiver to read the second pattern
-        self.sleep_until_next_tick()
+        self.sleep_n_ticks(2)
+
         self.cv_handler.black_out()
 
         # Sleep to wait before reading receiver's answer

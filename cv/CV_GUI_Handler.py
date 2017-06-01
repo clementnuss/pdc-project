@@ -38,13 +38,17 @@ class OpenCvHandler:
     instance = None
 
     def kill(self):
-        cv2.destroyAllWindows()
+
+        for i in range(1, 10):
+            cv2.destroyAllWindows()
+            cv2.waitKey(1)
 
     def wait_key_func(self):
         print("Initializing main window")
         cv2.namedWindow(MAIN_WINDOW, cv2.WND_PROP_FULLSCREEN)
         cv2.setWindowProperty(MAIN_WINDOW, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         if Constants.SIMULATE:
+            cv2.setWindowProperty(MAIN_WINDOW, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
             cv2.namedWindow(SECONDARY_WINDOW, cv2.WINDOW_GUI_EXPANDED | cv2.WINDOW_KEEPRATIO)
         cv2.startWindowThread()
         while True:
