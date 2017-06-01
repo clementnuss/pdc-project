@@ -93,7 +93,7 @@ class Transmitter(State_Machine):
         time.sleep(0.2)
 
         # Calibrate no acks
-        self._calibrate_noacks()
+        #self._calibrate_noacks()
 
         self.display_hsv_color_with_margin(S_ACK)
         self.state = State.SYNC_CLOCK
@@ -117,24 +117,30 @@ class Transmitter(State_Machine):
         while not self.receiver_ack:
 
             State_Machine._align_clock(self)
-            ack_score, no_ack_score = State_Machine.get_ack_scores(self)
+            frame = self.cap.readHSVFrame()
+
+            ack_mean = self.compute_cyclic_hue_mean_to_reference(frame, S_ACK)
+            no_ack_mean = self.compute_cyclic_hue_mean_to_reference(frame, S_NO_ACK)
+
+            ack_score = np.abs(ack_mean - S_ACK)
+            no_ack_score = np.abs(no_ack_mean - S_NO_ACK)
 
             logging.info("Ack score: " + str(ack_score) + " No ack score: " + str(no_ack_score))
 
             if ack_score < no_ack_score:
                 logging.info("Got ack from receiver.")
-                self._calibrate_acks()
+                #self._calibrate_acks()
 
                 curr_time = time.time()
                 self.clock_start = curr_time
 
                 logging.info(
-                    "Blacking out screen. Current time is: " + str(curr_time) + " Clock start is: " + str(
+                    "Sending NO ACK. Current time is: " + str(curr_time) + " Clock start is: " + str(
                         self.clock_start))
                 self.receiver_ack = True
 
                 # Screen goes black, meaning that at next epoch second, receiver clock fires up and get in sync
-                self.cv_handler.black_out()
+                self.cv_handler.display_hsv_color(S_NO_ACK)
                 self.state = State.QUADRANT_FEEDBACK
                 State_Machine.sleep_until_next_tick(self)
                 logging.info("Transmitter finished the synchronization phase")
@@ -144,7 +150,11 @@ class Transmitter(State_Machine):
     def do_calibrate(self):
         for i in range(0, NUM_SYMBOLS):
             for x in range(0, 3):
-                self.cv_handler.display_hsv_color(SYMBOLS[i])
+                bgr_col = cv2.cvtColor(np.uint8([[[SYMBOLS[i],255, 255]]]), cv2.COLOR_HSV2BGR)
+                quadrant = np.full((QUADRANT_HEIGHT, QUADRANT_WIDTH, 3), bgr_col, dtype=np.uint8)
+                self.cv_handler.display_biquadrant_frame(quadrant, quadrant,
+                                                         self.available_quadrants[0], self.available_quadrants[1],
+                                                         self.available_quadrants[2], self.available_quadrants[3])
                 State_Machine.sleep_until_next_tick(self)
 
         self.state = State.SEND
@@ -329,7 +339,13 @@ class Transmitter(State_Machine):
         current_time = time.time()
         logging.info("ack wait wakeup time is: " + str(current_time))
 
-        ack_score, no_ack_score = State_Machine.get_ack_scores(self)
+        frame = self.cap.readHSVFrame()
+
+        ack_mean = self.compute_cyclic_hue_mean_to_reference(frame, S_ACK)
+        no_ack_mean = self.compute_cyclic_hue_mean_to_reference(frame, S_NO_ACK)
+
+        ack_score = np.abs(ack_mean - S_ACK)
+        no_ack_score = np.abs(no_ack_mean - S_NO_ACK)
 
         logging.info("Ack score: " + str(ack_score) + " No ack score: " + str(no_ack_score))
 
@@ -365,8 +381,7 @@ class Transmitter(State_Machine):
 
         hue_mean = np.round(hue_mean / 3.0)
         logging.info("hue mean for no ack calibration was: " + str(hue_mean))
-        global S_NO_ACK
-        S_NO_ACK = np.uint8(np.round(hue_mean))
+        self.S_NO_ACK = np.uint8(np.round(hue_mean))
 
     def _calibrate_acks(self):
         hue_mean = 0.0
@@ -377,8 +392,7 @@ class Transmitter(State_Machine):
 
         hue_mean = np.round(hue_mean / 3.0)
         logging.info("hue mean for ack calibration was: " + str(hue_mean))
-        global S_ACK
-        S_ACK = np.uint8(np.round(hue_mean))
+        self.S_ACK = np.uint8(np.round(hue_mean))
 
     def _load_file(self, file_name):
 
