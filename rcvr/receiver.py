@@ -122,11 +122,12 @@ class Receiver(State_Machine):
         # Transmitter screen has blacked out
         value_mean = self.get_value_mean()
         # logging.info("value mean: " + str(value_mean))
-        if value_mean < 80:
+        if value_mean < 100:
+            logging.info("Value mean was: " + str(value_mean))
             current_time = time.time()
             self.clock_start = current_time + State_Machine.SAMPLING_OFFSET
 
-            self.state = State.CALIBRATE
+            self.state = State.QUADRANT_FEEDBACK
             self.cv_handler.black_out()
             logging.info("Clock start is: " + str(self.clock_start) + " Time is " + str(current_time))
             logging.info("Receiver finished the synchronization phase")
@@ -139,8 +140,9 @@ class Receiver(State_Machine):
 
             for x in range(0, 3):
                 # hue_mean += State_Machine.get_hue_mean(self)
-                hue_mean += State_Machine.get_cyclic_hue_mean_to_reference(self, SYMBOLS[i])
-
+                tmp_hue = State_Machine.get_cyclic_hue_mean_to_reference(self, SYMBOLS[i])
+                hue_mean += tmp_hue
+                self.cv_handler.display_hsv_color(tmp_hue)
                 State_Machine.sleep_until_next_tick(self)
 
             hue_mean = np.round(hue_mean / 3.0)
@@ -150,7 +152,7 @@ class Receiver(State_Machine):
         for i in range(0, NUM_SYMBOLS):
             logging.info("symbol " + str(i) + " : " + str(SYMBOLS[i]))
 
-        self.state = State.QUADRANT_FEEDBACK
+        self.state = State.RECEIVE
 
     def do_quadrant_feedback(self):
         """
@@ -188,13 +190,13 @@ class Receiver(State_Machine):
             self.cv_handler.display_binary_hsv_color_vertical(S_ACK, S_NO_ACK)
             logging.info("Receiver sent feedback, is ascendant")
             self.sleep_n_ticks(4)
-            self.state = State.RECEIVE
+            self.state = State.CALIBRATE
             return
         elif self.screen_orientation == 'descendant':
             self.cv_handler.display_binary_hsv_color_vertical(S_ACK, S_ACK)
             logging.info("Receiver sent feedback, is descendant")
             self.sleep_n_ticks(4)
-            self.state = State.RECEIVE
+            self.state = State.CALIBRATE
             return
 
         self.sleep_until_next_tick()
@@ -208,7 +210,7 @@ class Receiver(State_Machine):
         self.cv_handler.display_hsv_color(S_ACK if ack_received else S_NO_ACK)
         logging.info("Receiver told transmitter: " + str(ack_received))
         self.sleep_n_ticks(4)
-        self.state = State.RECEIVE
+        self.state = State.CALIBRATE
 
     def do_receive(self):
 
