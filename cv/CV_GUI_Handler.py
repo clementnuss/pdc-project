@@ -210,7 +210,7 @@ class OpenCvHandler:
             frame[0: HEIGHT / 2, WIDTH / 2: WIDTH] = quadrant2  # top right quadrant
             frame[HEIGHT / 2: HEIGHT, 0: WIDTH / 2, :] = quadrant1  # bottom left quadrant
 
-        self.display_hsv_frame(frame)
+        self.send_new_frame(frame)
 
     def _get_binary_quadrant(self, hsv_col1, hsv_col2):
         col1_subquadrant = np.full((HEIGHT / 2, WIDTH / 4, 3), [hsv_col1, 255, 255], dtype=np.uint8)

@@ -3,11 +3,13 @@ import sys
 from enum import Enum
 
 import unireedsolomon
+import winsound
 
 from State_Machine import *
 from cv.CV_GUI_Handler import HEIGHT, WIDTH, QUADRANT_HORIZONTAL_CELL_START, QUADRANT_VERTICAL_CELL_START, \
     NUM_HORIZONTAL_CELLS, CELL_WIDTH, CELL_HEIGHT, QUADRANT_WIDTH, QUADRANT_HEIGHT
 from utils import Constants
+from utils.Constants import PIXEL_MARGIN
 from utils.Symbols import *
 
 logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=logging.INFO)
@@ -85,7 +87,7 @@ class Transmitter(State_Machine):
         :return: 
         """
 
-        self.cv_handler.display_hsv_color(S_NO_ACK)
+        self.display_hsv_color_with_margin(S_NO_ACK)
         State_Machine.compute_screen_boundaries(self, S_NO_ACK)
         self.cap.set_screen_boundaries(self.screen_boundaries)
 
@@ -94,7 +96,7 @@ class Transmitter(State_Machine):
         # Calibrate no acks
         self._calibrate_noacks()
 
-        self.cv_handler.display_hsv_color(S_ACK)
+        self.display_hsv_color_with_margin(S_ACK)
         self.state = State.SYNC_CLOCK
         logging.info("Transmitter finished the Screen detection phase")
         return
@@ -134,27 +136,24 @@ class Transmitter(State_Machine):
 
                 # Screen goes black, meaning that at next epoch second, receiver clock fires up and get in sync
                 self.cv_handler.black_out()
-                self.state = State.CALIBRATE
+                self.state = State.QUADRANT_FEEDBACK
                 State_Machine.sleep_until_next_tick(self)
                 logging.info("Transmitter finished the synchronization phase")
             else:
                 logging.info("NO ACK")
 
     def do_calibrate(self):
-
         for i in range(0, NUM_SYMBOLS):
             for x in range(0, 3):
                 self.cv_handler.display_hsv_color(SYMBOLS[i])
                 State_Machine.sleep_until_next_tick(self)
 
-        self.state = State.QUADRANT_FEEDBACK
+        self.state = State.SEND
 
     def do_quadrant_feedback(self):
         logging.info("Transmitter entered quadrant feedback")
         self.sleep_n_ticks(3)
         frame = self.cap.readHSVFrame(write=True, caller="transmitter_quadrant_feedback")
-
-        self.state = State.SEND
 
         half_sep = int(frame.shape[1] / 2)
         margin = int(frame.shape[1] * 0.05)
@@ -172,6 +171,7 @@ class Transmitter(State_Machine):
             <
             np.abs(self.compute_cyclic_hue_mean_to_reference(right_half_hue, S_NO_ACK) - S_NO_ACK))
 
+        self.state = State.CALIBRATE
         if not left_ack_received and not right_ack_received:
             # Horizontal screen
             self.screen_orientation = 'horizontal'
@@ -182,14 +182,12 @@ class Transmitter(State_Machine):
             # ascendant screen
             self.available_quadrants = (False, True, True, False)
             logging.info("Transmitter received feedback, is ascendant")
-            self.state = State.SEND
             self.sleep_until_next_tick()
             return
         else:
             # descendant screen
             self.available_quadrants = (True, False, False, True)
             logging.info("Transmitter received feedback, is descendant")
-            self.state = State.SEND
             self.sleep_until_next_tick()
             return
 
@@ -200,15 +198,16 @@ class Transmitter(State_Machine):
 
         # Sleep for the receiver to read the second pattern
         self.sleep_until_next_tick()
+        self.cv_handler.black_out()
 
         # Sleep to wait before reading receiver's answer
         self.sleep_n_ticks(3)
 
         frame = self.cap.readHSVFrame()
         ack_received = (
-            np.abs(self.compute_cyclic_hue_mean_to_reference(frame,S_ACK) - S_ACK)
+            np.abs(self.compute_cyclic_hue_mean_to_reference(frame, S_ACK) - S_ACK)
             <
-            np.abs(self.compute_cyclic_hue_mean_to_reference(frame,S_NO_ACK) - S_NO_ACK))
+            np.abs(self.compute_cyclic_hue_mean_to_reference(frame, S_NO_ACK) - S_NO_ACK))
 
         if ack_received and self.screen_orientation == 'horizontal':
             self.available_quadrants = (True, True, False, False)
@@ -222,6 +221,8 @@ class Transmitter(State_Machine):
         else:
             self.available_quadrants = (False, True, False, True)
             logging.info("Transmitter received feedback, is right horizontal")
+
+        self.sleep_until_next_tick()
 
     def do_send(self):
         data_packet = collections.deque()
@@ -274,6 +275,7 @@ class Transmitter(State_Machine):
 
         # Added a wait to account for the generation of the first symbol on the transmitter side
         self.sleep_until_next_tick()
+
         for i in range(0, Constants.NUM_SYMBOLS_PER_DATA_PACKET):
             quadrant1, quadrant2 = self._generate_bgr_quadrants(
                 bits_array[i * Constants.NUM_BITS_PER_SYMBOL: (i + 1) * Constants.NUM_BITS_PER_SYMBOL])
@@ -340,6 +342,16 @@ class Transmitter(State_Machine):
         # If ack transmit next byte
         self.state = State.SEND
         State_Machine.sleep_until_next_tick(self)
+
+    def display_hsv_color_with_margin(self, hsv_col):
+        converted_color = cv2.cvtColor(np.array([[[hsv_col, 255, 255]]], dtype=np.uint8), cv2.COLOR_HSV2BGR)
+        color_frame = np.full((HEIGHT, WIDTH, 3), converted_color, dtype=np.uint8)
+        half_height = HEIGHT / 2
+        half_width = WIDTH / 2
+
+        color_frame[half_height - PIXEL_MARGIN:half_height + PIXEL_MARGIN,
+        half_width - PIXEL_MARGIN: half_width + PIXEL_MARGIN, :] = 0
+        self.cv_handler.send_new_frame(color_frame)
 
     def _calibrate_noacks(self):
         hue_mean = 0.0

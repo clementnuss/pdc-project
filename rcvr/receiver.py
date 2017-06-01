@@ -177,6 +177,8 @@ class Receiver(State_Machine):
 
         logging.info("Receiver entered quadrant feedback mode")
 
+        self.state = State.CALIBRATE
+
         # First pass
         if self.screen_orientation == 'horizontal':
             self.cv_handler.display_binary_hsv_color_vertical(S_NO_ACK, S_NO_ACK)
@@ -190,27 +192,24 @@ class Receiver(State_Machine):
             self.cv_handler.display_binary_hsv_color_vertical(S_ACK, S_NO_ACK)
             logging.info("Receiver sent feedback, is ascendant")
             self.sleep_n_ticks(4)
-            self.state = State.CALIBRATE
             return
         elif self.screen_orientation == 'descendant':
             self.cv_handler.display_binary_hsv_color_vertical(S_ACK, S_ACK)
             logging.info("Receiver sent feedback, is descendant")
             self.sleep_n_ticks(4)
-            self.state = State.CALIBRATE
             return
 
-        self.sleep_until_next_tick()
         # Second pass
+        frame = self.cap.readHSVFrame()
         ack_received = (
-            np.abs(self.get_cyclic_hue_mean_to_reference(S_ACK) - S_ACK)
+            np.abs(self.compute_cyclic_hue_mean_to_reference(frame,S_ACK) - S_ACK)
             <
-            np.abs(self.get_cyclic_hue_mean_to_reference(S_NO_ACK) - S_NO_ACK))
+            np.abs(self.compute_cyclic_hue_mean_to_reference(frame,S_NO_ACK) - S_NO_ACK))
 
         # Display the captured color so the transmitter knows which screen portion is available
         self.cv_handler.display_hsv_color(S_ACK if ack_received else S_NO_ACK)
         logging.info("Receiver told transmitter: " + str(ack_received))
         self.sleep_n_ticks(4)
-        self.state = State.CALIBRATE
 
     def do_receive(self):
 
@@ -220,6 +219,7 @@ class Receiver(State_Machine):
         bits_array = np.zeros(Constants.NUM_SYMBOLS_PER_DATA_PACKET * Constants.NUM_BITS_PER_SYMBOL, dtype=np.bool)
         # Added a wait to account for the generation of the first symbol on the transmitter side
         self.sleep_until_next_tick()
+        self.cv_handler.display_hsv_color(0)
 
         for i in range(0, Constants.NUM_SYMBOLS_PER_DATA_PACKET):
             # hue_mean = State_Machine.get_hue_mean(self)
