@@ -6,7 +6,7 @@ import unireedsolomon
 from unireedsolomon import RSCodecError
 
 from State_Machine import *
-from cv.CV_GUI_Handler import NUM_HORIZONTAL_CELLS
+from utils.Constants import NUM_HORIZONTAL_CELLS
 from cv.ImageProcessing import *
 from utils import Constants
 from utils.Symbols import *
@@ -266,8 +266,8 @@ class Receiver(State_Machine):
         self.state = State.VALIDATE_DATA
 
     def _read_quadrant_symbols(self, quadrant_frame: np.ndarray):
-        cell_height = quadrant_frame.shape[0] / 2
-        cell_width = quadrant_frame.shape[1] / 3
+        cell_height = quadrant_frame.shape[0] / Constants.NUM_VERTICAL_CELLS
+        cell_width = quadrant_frame.shape[1] / Constants.NUM_HORIZONTAL_CELLS
         bits_array = np.zeros(Constants.NUM_BITS_PER_QUADRANT, dtype=np.bool)
 
         logging_res = np.zeros(Constants.NUM_CELLS_PER_QUADRANT, dtype=np.uint8)

@@ -6,10 +6,10 @@ import unireedsolomon
 import winsound
 
 from State_Machine import *
-from cv.CV_GUI_Handler import HEIGHT, WIDTH, QUADRANT_HORIZONTAL_CELL_START, QUADRANT_VERTICAL_CELL_START, \
-    NUM_HORIZONTAL_CELLS, CELL_WIDTH, CELL_HEIGHT, QUADRANT_WIDTH, QUADRANT_HEIGHT
+from cv.CV_GUI_Handler import HEIGHT, WIDTH
 from utils import Constants
-from utils.Constants import PIXEL_MARGIN
+from utils.Constants import PIXEL_MARGIN, NUM_HORIZONTAL_CELLS, QUADRANT_WIDTH, QUADRANT_HEIGHT, CELL_WIDTH, \
+    CELL_HEIGHT, QUADRANT_HORIZONTAL_CELL_START, QUADRANT_VERTICAL_CELL_START
 from utils.Symbols import *
 
 logging.basicConfig(format='%(module)15s # %(levelname)s: %(message)s', level=logging.INFO)
@@ -296,7 +296,7 @@ class Transmitter(State_Machine):
     def _generate_quadrant(self, data_for_quadrant: np.array):
 
         quadrant = np.zeros((QUADRANT_HEIGHT, QUADRANT_WIDTH, 3), dtype=np.uint8)
-        logging_res = np.zeros(6)
+        logging_res = np.zeros(Constants.NUM_CELLS_PER_QUADRANT)
         for i in range(0, Constants.NUM_CELLS_PER_QUADRANT):
             cell_start_y = QUADRANT_VERTICAL_CELL_START[int(i / NUM_HORIZONTAL_CELLS)]
             cell_start_x = QUADRANT_HORIZONTAL_CELL_START[i % NUM_HORIZONTAL_CELLS]
