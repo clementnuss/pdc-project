@@ -20,7 +20,8 @@ DEBUG = False
 SIMULATE = False
 USE_MASK = False
 USE_AKIMBO_SCREEN = True
-WRITE_IMAGE = False
+WRITE_IMAGE = True
+SCREEN_DETECTION_MARGIN = 4
 
 SIMULATION_HANDLER = None
 
@@ -35,7 +36,7 @@ if SPEED == 0:
     # with this setup we can correct for 10 missed frames
     RS_message_size = 49
 
-    NUM_HORIZONTAL_CELLS = 2
+    NUM_HORIZONTAL_CELLS = 1
     NUM_VERTICAL_CELLS = 1
 
 elif SPEED == 1:
@@ -43,7 +44,7 @@ elif SPEED == 1:
     # with this setup we can correct for 10 missed frames
     RS_message_size = 192
 
-    NUM_HORIZONTAL_CELLS = 4
+    NUM_HORIZONTAL_CELLS = 3
     NUM_VERTICAL_CELLS = 2
 elif SPEED == 99:
     RS_codeword_size = 144

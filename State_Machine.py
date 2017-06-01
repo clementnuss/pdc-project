@@ -10,7 +10,7 @@ from utils.Symbols import *
 
 
 class State_Machine(object):
-    TRANSMISSION_RATE = 1.0 / 10.0
+    TRANSMISSION_RATE = 1.0 / 8.0
     SAMPLING_OFFSET = 1.0 / 30.0
     CONVERGENCE_BOUND_THRESHOLD = 20
     CONVERGENCE_THRESHOLD = 10000
@@ -326,15 +326,19 @@ class State_Machine(object):
         # Only 1 big screen
         if not has_two_contours:
             # Big screen is vertical
-            if (max_x1 - min_x1) < (max_y1 - min_y1):
-                self.screen_boundaries1 = (min_x1, max_x1, min_y1, (min_y1 + max_y1) / 2)
-                self.screen_boundaries2 = (min_x1, max_x1, (min_y1 + max_y1) / 2, max_y1)
+            if 0.8 * (max_x1 - min_x1) < (max_y1 - min_y1):
+                self.screen_boundaries1 = (
+                    min_x1, max_x1, min_y1, (min_y1 + max_y1) / 2 - Constants.SCREEN_DETECTION_MARGIN)
+                self.screen_boundaries2 = (
+                    min_x1, max_x1, (min_y1 + max_y1) / 2 + Constants.SCREEN_DETECTION_MARGIN, max_y1)
                 self.screen_orientation = 'vertical'
                 logging.info("Screen detection saw a vertical screen")
             # Big screen is horizontal
             else:
-                self.screen_boundaries1 = (min_x1, (min_x1 + max_x1) / 2, min_y1, max_y1)
-                self.screen_boundaries2 = ((min_x1 + max_x1) / 2, max_x1, min_y1, max_y1)
+                self.screen_boundaries1 = (
+                    min_x1, (min_x1 + max_x1) / 2 - Constants.SCREEN_DETECTION_MARGIN, min_y1, max_y1)
+                self.screen_boundaries2 = (
+                    (min_x1 + max_x1) / 2 + Constants.SCREEN_DETECTION_MARGIN, max_x1, min_y1, max_y1)
                 self.screen_orientation = 'horizontal'
                 logging.info("Screen detection saw a horizontal screen")
 
