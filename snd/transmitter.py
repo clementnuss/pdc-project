@@ -203,10 +203,12 @@ class Transmitter(State_Machine):
 
         # Sleep to wait before reading receiver's answer
         self.sleep_n_ticks(3)
+
+        frame = self.cap.readHSVFrame()
         ack_received = (
-            np.abs(self.get_cyclic_hue_mean_to_reference(S_ACK) - S_ACK)
+            np.abs(self.compute_cyclic_hue_mean_to_reference(frame,S_ACK) - S_ACK)
             <
-            np.abs(self.get_cyclic_hue_mean_to_reference(S_NO_ACK) - S_NO_ACK))
+            np.abs(self.compute_cyclic_hue_mean_to_reference(frame,S_NO_ACK) - S_NO_ACK))
 
         if ack_received and self.screen_orientation == 'horizontal':
             self.available_quadrants = (True, True, False, False)

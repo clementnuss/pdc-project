@@ -29,7 +29,7 @@ def simulate_camera_tmtr(frame):
         OOXX        XXXX        XXOO        - from top to bottom
     """
 
-    pattern = 2
+    pattern = Constants.MASK_PATTERN
     logging.info("Selected pattern : " + str(pattern))
     if pattern == 0:
         # Vertical right
@@ -159,6 +159,7 @@ class SimulationHandler:
 
             frame[: CV_GUI_Handler.HEIGHT / 2, :, :] = converted_col1
             frame[CV_GUI_Handler.HEIGHT / 2:, :, :] = converted_col2
+            self.send_new_frame(frame)
 
         def display_biquadrant_frame(self, quadrant1, quadrant2, top_left, top_right, bottom_left, bottom_right):
             """
