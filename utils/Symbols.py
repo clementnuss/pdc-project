@@ -26,18 +26,11 @@ BIT_MASK = NUM_SYMBOLS - 1
 
 SYMBOLS = np.zeros((NUM_SYMBOLS), dtype=np.uint8)
 
-SYMBOLS[0] = np.uint8(0)
-SYMBOLS[1] = np.uint8(35)
-SYMBOLS[2] = np.uint8(90)
-SYMBOLS[3] = np.uint8(130)
-
-"""
 SYMBOLS[0] = np.uint8(10)
 SYMBOLS[1] = np.uint8(20)
 SYMBOLS[2] = np.uint8(30)
 SYMBOLS[3] = np.uint8(50)
-SYMBOLS[4] = np.uint8(90)
+SYMBOLS[4] = np.uint8(78)
 SYMBOLS[5] = np.uint8(110)
 SYMBOLS[6] = np.uint8(150)
-SYMBOLS[7] = np.uint8(165)
-"""
+SYMBOLS[7] = np.uint8(162)

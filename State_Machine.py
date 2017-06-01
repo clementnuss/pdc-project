@@ -87,7 +87,7 @@ class State_Machine(object):
         value_target = 255
 
         max_delta_hue = 20
-        max_delta_saturation = 200
+        max_delta_saturation = 180
         max_delta_value = 150
 
         min_x = min_y = max_x = max_y = 0
