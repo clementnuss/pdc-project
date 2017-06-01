@@ -12,7 +12,7 @@ from utils.Symbols import *
 class State_Machine(object):
     TRANSMISSION_RATE = 1.0 / 10.0
     SAMPLING_OFFSET = 1.0 / 30.0
-    CONVERGENCE_BOUND_THRESHOLD = 50
+    CONVERGENCE_BOUND_THRESHOLD = 20
     CONVERGENCE_THRESHOLD = 10000
     BLACK_THRESHOLD = 200000
 
@@ -182,7 +182,7 @@ class State_Machine(object):
 
         max_delta_hue = 20
         max_delta_saturation = 80
-        max_delta_value = 70
+        max_delta_value = 80
 
         min_x1 = min_y1 = max_x1 = max_y1 = 0
         min_x2 = min_y2 = max_x2 = max_y2 = 0
@@ -456,7 +456,8 @@ class State_Machine(object):
 
     def get_cyclic_hue_mean_to_reference(self, ref):
         if Constants.USE_AKIMBO_SCREEN and self.name == 'Receiver':
-            frame1, frame2 = self.cap.readHSVFrame_akimbo(write=True, caller="get_cyclic_hue_mean_to_ref")
+            frame1, frame2 = self.cap.readHSVFrame_akimbo(write=Constants.WRITE_IMAGE,
+                                                          caller="get_cyclic_hue_mean_to_ref")
             return np.array(self.compute_cyclic_hue_mean_to_reference(frame1, ref),
                             self.compute_cyclic_hue_mean_to_reference(frame2, ref)).mean()
         else:

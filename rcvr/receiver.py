@@ -98,6 +98,7 @@ class Receiver(State_Machine):
             State_Machine.compute_screen_boundaries(self, S_ACK)
             self.cap.set_screen_boundaries(self.screen_boundaries)
 
+        time.sleep(1)
         self.cv_handler.display_hsv_color(S_ACK)
         self.state = State.SYNC_CLOCK
         logging.info("Receiver finished the Screen detection phase")
@@ -119,11 +120,24 @@ class Receiver(State_Machine):
 
         # Due to polling of camera, none means we do no yet have access to cropped frame
 
-        # Transmitter screen has blacked out
-        value_mean = self.get_value_mean()
-        logging.info("value mean: " + str(value_mean))
-        if value_mean < 100:
-            logging.info("Value mean was: " + str(value_mean))
+        frame1, frame2 = self.cap.readHSVFrame_akimbo()
+
+        ack_mean = np.array([self.compute_cyclic_hue_mean_to_reference(frame1, S_ACK),
+                             self.compute_cyclic_hue_mean_to_reference(frame2, S_ACK)]).mean()
+        no_ack_mean = np.array([self.compute_cyclic_hue_mean_to_reference(frame1, S_NO_ACK),
+                                self.compute_cyclic_hue_mean_to_reference(frame2, S_NO_ACK)]).mean()
+
+        ack_score = np.abs(ack_mean - S_ACK)
+        no_ack_score = np.abs(no_ack_mean - S_NO_ACK)
+
+        logging.info("Ack score: " + str(ack_score) + " No ack score: " + str(no_ack_score))
+        received_no_ack = False
+
+        if (ack_score > no_ack_score):
+            received_no_ack = True
+
+        if received_no_ack:
+            # logging.info("Value mean was: " + str(value_mean))
             current_time = time.time()
             self.clock_start = current_time + State_Machine.SAMPLING_OFFSET
 
