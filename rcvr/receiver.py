@@ -121,8 +121,8 @@ class Receiver(State_Machine):
 
         # Transmitter screen has blacked out
         value_mean = self.get_value_mean()
-        # logging.info("value mean: " + str(value_mean))
-        if value_mean < 120:
+        logging.info("value mean: " + str(value_mean))
+        if value_mean < 100:
             logging.info("Value mean was: " + str(value_mean))
             current_time = time.time()
             self.clock_start = current_time + State_Machine.SAMPLING_OFFSET
@@ -275,7 +275,7 @@ class Receiver(State_Machine):
         for i in range(0, Constants.NUM_CELLS_PER_QUADRANT):
             cell_start_y = int(int(i / NUM_HORIZONTAL_CELLS) * cell_height)
             cell_start_x = int(int(i % NUM_HORIZONTAL_CELLS) * cell_width)
-            cell_margin = 3
+            cell_margin = 5
             subcell = quadrant_frame[cell_margin + cell_start_y:int(cell_start_y + cell_height - cell_margin),
                       cell_margin + cell_start_x:int(cell_start_x + cell_width - cell_margin), :].copy()
 
