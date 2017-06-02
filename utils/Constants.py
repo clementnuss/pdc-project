@@ -26,11 +26,11 @@ SCREEN_DETECTION_MARGIN = 4
 SIMULATION_HANDLER = None
 
 PIXEL_MARGIN = 7
-PIXEL_MARGIN_PER_QUADRANT = 5
+PIXEL_MARGIN_PER_QUADRANT = 0
 
 NUM_QUADRANTS = 2
 
-SPEED = 0
+SPEED = 2
 if SPEED == 0:
     RS_codeword_size = 72
     # with this setup we can correct for 10 missed frames
@@ -39,18 +39,20 @@ if SPEED == 0:
     NUM_HORIZONTAL_CELLS = 1
     NUM_VERTICAL_CELLS = 1
 
-elif SPEED == 1:
-    RS_codeword_size = 252
+if SPEED == 1:
+    RS_codeword_size = 72
     # with this setup we can correct for 10 missed frames
-    RS_message_size = 192
+    RS_message_size = 49
 
-    NUM_HORIZONTAL_CELLS = 3
-    NUM_VERTICAL_CELLS = 2
-elif SPEED == 99:
+    NUM_HORIZONTAL_CELLS = 2
+    NUM_VERTICAL_CELLS = 1
+elif SPEED == 2:
     RS_codeword_size = 144
     # with this setup we can correct for 10 missed frames
     RS_message_size = 98
-    NUM_QUADRANTS = 4
+
+    NUM_HORIZONTAL_CELLS = 3
+    NUM_VERTICAL_CELLS = 2
 
 NUM_CELLS_PER_QUADRANT = NUM_HORIZONTAL_CELLS * NUM_VERTICAL_CELLS
 NUM_BITS_PER_COLOR = 3
