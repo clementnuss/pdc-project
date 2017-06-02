@@ -30,7 +30,7 @@ PIXEL_MARGIN_PER_QUADRANT = 0
 
 NUM_QUADRANTS = 2
 
-SPEED = 2
+SPEED = 0
 if SPEED == 0:
     RS_codeword_size = 72
     # with this setup we can correct for 10 missed frames

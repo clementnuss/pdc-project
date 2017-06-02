@@ -289,7 +289,7 @@ class Receiver(State_Machine):
         for i in range(0, Constants.NUM_CELLS_PER_QUADRANT):
             cell_start_y = int(int(i / NUM_HORIZONTAL_CELLS) * cell_height)
             cell_start_x = int(int(i % NUM_HORIZONTAL_CELLS) * cell_width)
-            cell_margin = 1
+            cell_margin = 3
             subcell = quadrant_frame[cell_margin + cell_start_y:int(cell_start_y + cell_height - cell_margin),
                       cell_margin + cell_start_x:int(cell_start_x + cell_width - cell_margin), :].copy()
 
