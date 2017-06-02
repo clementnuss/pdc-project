@@ -47,12 +47,12 @@ if SPEED == 1:
     NUM_HORIZONTAL_CELLS = 2
     NUM_VERTICAL_CELLS = 1
 elif SPEED == 2:
-    RS_codeword_size = 144
+    RS_codeword_size = 243
     # with this setup we can correct for 10 missed frames
-    RS_message_size = 98
+    RS_message_size = 198
 
-    NUM_HORIZONTAL_CELLS = 3
-    NUM_VERTICAL_CELLS = 2
+    NUM_HORIZONTAL_CELLS = 6
+    NUM_VERTICAL_CELLS = 3
 
 NUM_CELLS_PER_QUADRANT = NUM_HORIZONTAL_CELLS * NUM_VERTICAL_CELLS
 NUM_BITS_PER_COLOR = 3
